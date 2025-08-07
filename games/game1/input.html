@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Darakoi Teacher Pannel</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }     
+      
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start; 
+        gap: 10px;
+        padding: 1rem;
+        font-family: sans-serif;
+        background: #fafafa;
+      }
+      
+      .canvas-container {
+        display: flex;
+        margin: 10px;
+        overflow: visible;
+        align-items: stretch; 
+      }
+      
+      #canvas {
+        width: 800px;
+        flex-grow: 1; 
+        border: 1px solid black;
+        background: #fff;
+      }
+      
+      .palette-layout,
+      .palette-layout2 {
+        width: 180px;
+        padding: 10px 18px;
+        display: flex;
+        margin: 10px;
+        flex-direction: column;
+        align-items: center;
+        gap: 22px;
+        border: 1px solid black;
+        overflow: visible;
+      }
+      
+      .palette-item,
+      .palette-item2 {
+        width: auto;
+        height: auto;
+        cursor: grab;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: visible;
+        padding: 0;
+        margin: 0;
+        background: transparent;
+        border: none;
+      }
+      
+      .palette-item svg,
+      .palette-item2 svg {
+        overflow: visible;
+        display: block;
+      }
+      
+      .palette-layout > img,
+      .palette-layout2 > img {
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+      }
+      
+      .selectedSvg {
+        border: 2px solid #32cd32;
+        padding: 20px;
+      }
+      
+      .konvajs-content {
+        overflow: visible !important;
+      }
+      
+      #downloadDataset {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      
+      #downloadDataset:hover {
+        background-color: #0056b3;
+      }
+      
+      
+    </style>
+  </head>
+  <body>
+    <div class="palette-layout2" id="palette2">
+      <img src="/games/game1/c0.png" id="img1" alt="Rotate" />
+    </div>
+
+    <div class="canvas-container">
+      <div id="canvas"></div>
+    </div>
+
+    <div class="palette-layout" id="palette">
+      <img src="/games/game1/c0.png" id="img2" alt="Rotate" />
+    </div>
+
+    <button id="downloadDataset">Get Dataset</button>
+
+    <script src="https://unpkg.com/konva@9/konva.min.js"></script>
+    <script>
+        const shapeNames = [
+        "parallelogram",
+        "diamond",
+        "smallTriangle",
+        "square",
+        "hex",
+        "uniqueDiamond",
+      ];
+
+      const shapeDimensions = {
+        parallelogram: { width: 104, height: 122, viewBox: "-30 -30 164 182" },
+        diamond: { width: 71, height: 116, viewBox: "-30 -30 131 176" },
+        smallTriangle: { width: 67, height: 58, viewBox: "-30 -30 127 118" },
+        square: { width: 73, height: 70, viewBox: "-30 -30 133 130" },
+        hex: { width: 137, height: 122, viewBox: "-30 -30 197 182" },
+        uniqueDiamond: { width: 54, height: 113, viewBox: "-30 -30 114 173" },
+      };
+
+      const basePaths = [
+        "M1,60 L35,122 L104,0 L35,2 Z",
+        "M33,0L0,61.000004 37,116 71,59 33,1z",
+        "M32,1L0,58 67,58 33,0z",
+        "M0,0L73,0 73,70 0,70z",
+        "M35,0 L1,62 36,122 37,122 103,122 137,60 103,1 L35,0 Z",
+        "M42.3543 63.1061L53 2L11.2362 50.7197L1 111L42.3543 63.1061Z",
+      ];
+
+      const fills = ["none", "none", "none", "none", "none", "none"];
+      const coloredFills = [
+        "#EE1B24",
+        "#0054A5",
+        "#00A652",
+        "#F8941C",
+        "#FFF301",
+        "#FBDBA9",
+      ];
+
+      const rawSVGs = basePaths.map((d, i) => {
+        const { viewBox } = shapeDimensions[shapeNames[i]];
+        return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${viewBox}'><g transform='translate(30,30)'><path d='${d}' fill='${fills[i]}' stroke='black' stroke-width='4'/></g></svg>`;
+      });
+
+      const coloredSVGs = basePaths.map((d, i) => {
+        const { viewBox } = shapeDimensions[shapeNames[i]];
+        return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${viewBox}'><g transform='translate(30,30)'><path d='${d}' fill='${coloredFills[i]}' stroke='black' stroke-width='4'/></g></svg>`;
+      });
+
+      function prepareSvgList(list) {
+        return list.map((svgStr) => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(svgStr, "image/svg+xml");
+          const svg = doc.querySelector("svg");
+          const path = svg.querySelector("path");
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.appendChild(path.cloneNode(true));
+          svg.innerHTML = "";
+          svg.appendChild(g);
+          return { svg: svg.outerHTML, rotation: 0 };
+        });
+      }
+
+      const svgList = prepareSvgList(rawSVGs);
+      const coloredSVGsList = prepareSvgList(coloredSVGs);
+
+      const palette = document.getElementById("palette");
+      const palette2 = document.getElementById("palette2");
+      const canvasContainer = document.getElementById("canvas");
+
+      const stage = new Konva.Stage({
+        container: "canvas",
+        width: 800,
+        height: 600,
+      });
+
+      const layer = new Konva.Layer();
+      stage.add(layer);
+
+      const droppedSVGs = [];
+      const draggedColorSvgs = [];
+
+      function createPaletteItems(svgArray, container, isColored) {
+        svgArray.forEach((item, index) => {
+          const div = document.createElement("div");
+          div.className = isColored ? "palette-item2" : "palette-item";
+          div.innerHTML = item.svg;
+          div.draggable = true;
+
+          const svgElement = div.querySelector("svg");
+          svgElement.draggable = true;
+          const shapeName = shapeNames[index];
+          const dims = shapeDimensions[shapeName];
+          svgElement.setAttribute("width", dims.width);
+          svgElement.setAttribute("height", dims.height);
+
+          div.addEventListener("click", () => {
+            document
+              .querySelectorAll(".selectedSvg")
+              .forEach((el) => el.classList.remove("selectedSvg"));
+            div.classList.add("selectedSvg");
+
+            if (isColored) {
+              lastSelectedColoredSVG = { element: svgElement, index };
+              lastSelectedSVG = null;
+            } else {
+              lastSelectedSVG = { element: svgElement, index };
+              lastSelectedColoredSVG = null;
+            }
+          });
+
+          div.addEventListener("dragstart", (e) => {
+            item.svg = svgElement.outerHTML;
+            e.dataTransfer.setData(
+              "text/plain",
+              JSON.stringify({ svg: item.svg, index, shape: shapeNames[index], isColored })
+            );
+          });
+
+          container.appendChild(div);
+        });
+      }
+
+      createPaletteItems(svgList, palette, false);
+      createPaletteItems(coloredSVGsList, palette2, true);
+
+      let lastSelectedSVG = null;
+      let lastSelectedColoredSVG = null;
+
+      function rotateSelectedSVGBy30() {
+        let element, index, targetList, targetArray;
+
+        if (lastSelectedSVG) {
+          ({ element, index } = lastSelectedSVG);
+          targetList = svgList;
+          targetArray = droppedSVGs;
+        } else if (lastSelectedColoredSVG) {
+          ({ element, index } = lastSelectedColoredSVG);
+          targetList = coloredSVGsList;
+          targetArray = draggedColorSvgs;
+        } else return;
+
+        const g = element.querySelector("g");
+        if (!g) return;
+        let rotationAngle = shapeNames[index] === "square" ? 15 : 30;
+        targetList[index].rotation = (targetList[index].rotation + rotationAngle) % 360;
+
+        const bbox = g.getBBox();
+        const centerX = bbox.x + bbox.width / 2;
+        const centerY = bbox.y + bbox.height / 2;
+
+        g.setAttribute(
+          "transform",
+          `rotate(${targetList[index].rotation}, ${centerX}, ${centerY})`
+        );
+        targetList[index].svg = element.outerHTML;
+
+        targetArray.forEach((svgObj) => {
+          if (svgObj.index === index) {
+            svgObj.rotation = targetList[index].rotation;
+          }
+        });
+      }
+
+      document.getElementById("img1").onclick = rotateSelectedSVGBy30;
+      document.getElementById("img2").onclick = rotateSelectedSVGBy30;
+
+      canvasContainer.addEventListener("dragover", (e) => e.preventDefault());
+
+      canvasContainer.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+        const svgData = data.svg;
+        const svgIndex = data.index;
+        const shape = data.shape;
+        const isColored = data.isColored;
+        if (!svgData) return;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgData, "image/svg+xml");
+        const svgElement = doc.querySelector("svg");
+        const path = svgElement.querySelector("path");
+        const viewBox = shapeDimensions[shape].viewBox;
+        const dims = shapeDimensions[shape];
+
+        const rect = canvasContainer.getBoundingClientRect();
+        const pointerPos = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        };
+
+        const blob = new Blob([svgData], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+
+        img.onload = () => {
+          const konvaImage = new Konva.Image({
+            x: pointerPos.x - dims.width / 2,
+            y: pointerPos.y - dims.height / 2,
+            image: img,
+            width: dims.width,
+            height: dims.height,
+            draggable: true,
+          });
+
+          const svgObject = {
+            shape,
+            d: path.getAttribute("d"),
+            viewBox,
+            width: dims.width.toString(),
+            height: dims.height.toString(),
+            position: { top: `${pointerPos.y - dims.height / 2}px`, left: `${pointerPos.x - dims.width / 2}px` },
+            rotation: (isColored ? coloredSVGsList : svgList)[svgIndex].rotation,
+            fill: path.getAttribute("fill") || "none",
+          };
+
+          if (isColored) {
+            draggedColorSvgs.push(svgObject);
+          } else {
+            droppedSVGs.push(svgObject);
+          }
+
+          konvaImage.on("dragend", (e) => {
+            const { x, y } = e.target.position();
+            svgObject.position = { top: `${y}px`, left: `${x}px` };
+          });
+
+          layer.add(konvaImage);
+          layer.draw();
+          URL.revokeObjectURL(url);
+        };
+
+        img.src = url;
+      });
+
+      function drawIsometricGrid(stage, spacing = 40, color = "#00B7C2") {
+        const width = stage.width();
+        const height = stage.height();
+        const layer = new Konva.Layer();
+        const triHeight = (Math.sqrt(3) / 2) * spacing;
+
+        for (let y = 0; y <= height; y += triHeight) {
+          layer.add(
+            new Konva.Line({
+              points: [0, y, width, y],
+              stroke: color,
+              strokeWidth: 0.5,
+            })
+          );
+        }
+
+        for (let x = -width; x <= width * 2; x += spacing) {
+          layer.add(
+            new Konva.Line({
+              points: [x, 0, x - height / Math.sqrt(3), height],
+              stroke: color,
+              strokeWidth: 0.5,
+            })
+          );
+        }
+
+        for (let x = -width; x <= width * 2; x += spacing) {
+          layer.add(
+            new Konva.Line({
+              points: [x, 0, x + height / Math.sqrt(3), height],
+              stroke: color,
+              strokeWidth: 0.5,
+            })
+          );
+        }
+
+        stage.add(layer);
+        layer.moveToBottom();
+      }
+
+      drawIsometricGrid(stage);
+
+      document.getElementById("downloadDataset").addEventListener("click", () => {
+        const allShapes = [...draggedColorSvgs, ...droppedSVGs].map((svgObj) => {
+          const dims = shapeDimensions[svgObj.shape];
+          return {
+            shape: svgObj.shape,
+            d: svgObj.d,
+            viewBox: dims.viewBox,
+            width: svgObj.width,
+            height: svgObj.height,
+            position: {
+              top: svgObj.position.top,
+              left: svgObj.position.left,
+            },
+            rotation: svgObj.rotation,
+            fill: svgObj.fill,
+          };
+        });
+
+        const dataset = {
+          mainBoard: allShapes,
+        };
+
+        const blob = new Blob([JSON.stringify(dataset, null, 2)], {
+          type: "application/json",
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "shapes_dataset.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
+
+      // Access game-specific data
+    const gameData = window.parent.currentGameData || { letters: ['A', 'B', 'C'] };
+    document.getElementById('gameContent').textContent = `Match these letters: ${gameData.letters?.join(', ') || 'No data'}`;
+
+    function completeGame() {
+      window.parent.postMessage({ type: 'gameComplete', score: 90 }, '*');
+    }
+    </script>
+  </body>
+</html>

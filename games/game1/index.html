@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AlphaBlocks</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3rem;
+        padding: 1rem 0rem;
+        font-family: sans-serif;
+        background: #fafafa;
+         
+        height: 100vh; 
+      }
+      
+      h2 {
+        font-weight: 600;
+      }
+      
+      .board {
+        display: flex;
+        gap: 8rem;
+        flex: 1 0 auto;
+        position: relative;
+        width: 90vw;
+        height: 90vh;
+        border: 1px solid black;
+        background: #fff;
+        
+      }
+      
+      .palette {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+      }
+      
+      .slot {
+        stroke: #000;
+        stroke-width: 4;
+        pointer-events: all;
+      }
+      
+      .slot.hover {
+        stroke: #32cd32;
+        stroke-width: 6;
+      }
+      
+      .drag {
+        cursor: grab;
+      }
+      
+      .dragging {
+        opacity: 0.5;
+      }
+      
+      .dropped-shape {
+        position: absolute;
+        pointer-events: none;
+        z-index: 10;
+      }
+      
+      .slot-container {
+        position: absolute;
+        pointer-events: none;
+        z-index: 5;
+      }
+      
+      .drag-ghost {
+        position: fixed;
+        opacity: 0.7;
+        pointer-events: none;
+        z-index: 10000;
+        filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.5));
+        transform-origin: center;
+      }
+      
+      .selectedSvg {
+        border: 2px solid #32cd32;
+        padding: 5px;
+      }
+      
+      .dropped-shape svg path {
+        stroke: #000;
+        stroke-width: 4;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="board" id="board"></div>
+    <div class="palette" id="palette"></div>
+
+    <script type="module">
+      import { inputData } from "./input.js";
+      let rotateButton = {
+        icon: "/games/game1/c0.png",
+        size: 96,
+        fontSize: "2.3rem",
+      };
+
+      let shapePalletes = [
+      {
+        name: "square",
+        rotation: 0,
+        svg: {
+          viewBox: "-30 -30 133 130",
+          width: 73,
+          height: 70,
+          d: "M0,0L73,0 73,70 0,70z",
+          fill: "#F8941C",
+        },
+      },
+      {
+        name: "smallTriangle",
+        rotation: 0,
+        svg: {
+          viewBox: "-30 -30 127 118",
+          width: 67,
+          height: 58,
+          d: "M0,58L67,58 33.5,1 0,58z",
+          fill: "#00A652",
+        },
+      },
+      {
+        name: "hex",
+        rotation: 0,
+        svg: {
+          viewBox: "-30 -30 197 182",
+          width: 137,
+          height: 122,
+          d: "M35,0L0,60 1,60 36,122 37,122 103,122 137,60 103,1 34,0z",
+          fill: "#FFF301",
+        },
+      },
+      {
+        name: "diamond",
+        rotation: 0,
+        svg: {
+          viewBox: "-30 -30 131 176",
+          width: 71,
+          height: 116,
+          d: "M33,0L0,61.000004 37,116 71,59 33,1z",
+          fill: "#0054A5",
+        },
+      },
+      {
+        name: "parallelogram",
+        rotation: 0,
+        svg: {
+          viewBox: "-30 -30 164 182",
+          width: 104,
+          height: 122,
+          d: "M1,60L35,122 104,0 35,2Z",
+          fill: "#EE1B24",
+        },
+      },
+      {
+        name: "uniqueDiamond",
+        rotation: 0,
+        svg: {
+          viewBox: "-30 -30 114 173",
+          width: 54,
+          height: 113,
+          d: "M42.3543 63.1061L53 2L11.2362 50.7197L1 111L42.3543 63.1061Z",
+          fill: "#FBDBA9",
+        },
+      },
+    ];
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const board = document.getElementById("board");
+        const palette = document.getElementById("palette");
+
+        inputData.mainBoard.forEach((s, i) => {
+          const isValidPath =
+            typeof s.d === "string" && /^[MLCQZmlcqz]/.test(s.d.trim());
+          if (!isValidPath) {
+            console.warn(`Skipped invalid SVG path at index ${i}:`, s.d);
+            return;
+          }
+
+          const wrap = document.createElement("div");
+          wrap.className = "slot-container";
+          wrap.style.position = "absolute";
+          wrap.style.top = s.position.top;
+          wrap.style.left = s.position.left;
+          wrap.style.transform = `rotate(${s.rotation}deg)`;
+          wrap.innerHTML = `
+                    <svg class="slot-svg" viewBox="${s.viewBox}" width="${
+            s.width
+          }" height="${s.height}">
+                        <path class="slot" fill="${
+                          s.fill !== "none" ? s.fill : "transparent"
+                        }" id="slot-${i + 1}"
+                              data-rotate="${s.rotation}" data-shape="${
+            s.shape
+          }" d="${s.d}">
+                        </path>
+                    </svg>`;
+
+          board.appendChild(wrap);
+        });
+
+        const { icon, size, fontSize } = rotateButton;
+        const rotateBtn = document.createElement("span");
+        rotateBtn.id = "rotate";
+        rotateBtn.style.fontSize = fontSize;
+        rotateBtn.innerHTML = `<img src="${icon}" alt="rotate" width="${size}" height="${size}">`;
+
+        shapePalletes
+          .slice(0, 3)
+          .forEach((p, idx) => palette.appendChild(createItem(p, idx + 1)));
+        palette.appendChild(rotateBtn);
+        shapePalletes
+          .slice(3)
+          .forEach((p, idx) => palette.appendChild(createItem(p, idx + 4)));
+
+        function createItem(p, num) {
+          const div = document.createElement("div");
+          div.className = "shape drag";
+          div.dataset.rotate = p.rotation;
+          div.dataset.shape = p.name;
+          div.id = `piece-${num}`;
+
+          if (p.svg) {
+            const { viewBox, width, height, d, fill } = p.svg;
+            div.innerHTML = `
+                        <svg viewBox="${viewBox}" width="${width}" height="${height}">
+                            <path d="${d}" fill="${fill}"></path>
+                        </svg>`;
+          }
+          return div;
+        }
+
+        const draggables = document.querySelectorAll(".drag");
+        const slots = document.querySelectorAll(".slot");
+        const slotPos = {};
+
+        document.querySelectorAll(".slot-container").forEach((c) => {
+          const slot = c.querySelector(".slot");
+          slotPos[slot.id] = {
+            left: c.style.left,
+            top: c.style.top,
+            width: c.querySelector("svg").getAttribute("width"),
+            height: c.querySelector("svg").getAttribute("height"),
+          };
+        });
+
+        const fixedPosition = {};
+
+        let activePiece = null;
+        let dragGhost = null;
+
+        draggables.forEach((el) => {
+          el.setAttribute("draggable", true);
+
+          el.addEventListener("dragstart", (e) => {
+            el.classList.add("dragging");
+            e.dataTransfer.setData("shape", el.dataset.shape);
+            e.dataTransfer.setData(
+              "svg",
+              el.querySelector("svg")?.outerHTML || el.outerHTML
+            );
+            e.dataTransfer.setData("rotate", el.dataset.rotate || "0");
+
+            dragGhost = document.createElement("div");
+            dragGhost.className = "drag-ghost";
+            const rotation = el.dataset.rotate || 0;
+            dragGhost.innerHTML =
+              el.querySelector("svg")?.outerHTML || el.outerHTML;
+            dragGhost.style.transform = `rotate(${rotation}deg)`;
+            dragGhost.style.width =
+              el.querySelector("svg")?.getAttribute("width") + "px";
+            dragGhost.style.height =
+              el.querySelector("svg")?.getAttribute("height") + "px";
+            document.body.appendChild(dragGhost);
+
+            e.dataTransfer.setDragImage(new Image(), 0, 0);
+          });
+
+          el.addEventListener("drag", (e) => {
+            if (dragGhost) {
+              const rotation = el.dataset.rotate || 0;
+              dragGhost.style.transform = `rotate(${rotation}deg)`;
+              dragGhost.style.left = `${
+                e.clientX - dragGhost.offsetWidth / 2
+              }px`;
+              dragGhost.style.top = `${
+                e.clientY - dragGhost.offsetHeight / 2
+              }px`;
+            }
+          });
+
+          el.addEventListener("dragend", () => {
+            el.classList.remove("dragging");
+            el.style.transform = `rotate(${el.dataset.rotate || 0}deg)`;
+            if (dragGhost) {
+              dragGhost.remove();
+              dragGhost = null;
+            }
+          });
+
+          el.addEventListener("click", () => {
+            activePiece = el;
+            document.querySelectorAll(".shape").forEach((piece) => {
+              piece.classList.remove("selectedSvg");
+            });
+            activePiece.classList.add("selectedSvg");
+          });
+        });
+
+        const rotationConditions = {
+            square: {
+                step: 15,
+                equivalentGroups: [
+                    [0, 90, 180, 270, 285],
+                    [15, 105, 195, 300],
+                    [30, 120, 210, 315],
+                    [45, 135, 225, 330],
+                    [60, 150, 240, 345],
+                    [75, 165, 255]
+                ]
+            },
+            diamond: {
+                step: 30,
+                equivalentGroups: [
+                    [0, 180],
+                    [30, 210],
+                    [60, 240],
+                    [90, 270],
+                    [120, 300],
+                    [150, 330]
+                ]
+            },
+            smallTriangle: {
+                step: 30,
+                equivalentGroups: [
+                    [0, 120, 240],
+                    [30, 150, 270],
+                    [60, 180, 300],
+                    [90, 210, 330]
+                ]
+            },
+            hex: {
+                step: 30,
+                equivalentGroups: [
+                    [0, 60, 120, 180, 240, 300],
+                    [30, 90, 150, 210, 270, 330]
+                ]
+            },
+            parallelogram: {
+                step: 30,
+                equivalentGroups: [
+                [0],
+                [30],
+                [60],
+                [90],
+                [120],
+                [150],
+                [180],
+                [210],
+                [240],
+                [270],
+                [300],
+                [330]
+                ]
+            },
+            uniqueDiamond: {
+                step: 30,
+                equivalentGroups: [
+                    [0, 180],
+                    [30, 210],
+                    [60, 240],
+                    [90, 270],
+                    [120, 300],
+                    [150, 330]
+                ]
+            }
+        };
+        
+        function normalize(angle) {
+            return ((angle % 360) + 360) % 360;
+        }
+        
+        slots.forEach(slot => {
+        
+            slot.addEventListener("dragover", e => {
+                e.preventDefault();
+                if (slot.dataset.filled) return;
+                if (slot.dataset.shape === e.dataTransfer.getData("shape")) {
+                    slot.classList.add("hover");
+                }
+            });
+        
+            
+            slot.addEventListener("dragleave", () => slot.classList.remove("hover"));
+        
+           
+            slot.addEventListener("drop", e => {
+                e.preventDefault();
+                slot.classList.remove("hover");
+        
+                if (slot.dataset.filled) return;
+        
+                const shape = e.dataTransfer.getData("shape");
+                const okShape = slot.dataset.shape === shape;
+        
+                const slotRotate = normalize(Number(slot.dataset.rotate) || 0);
+                const shapeRotate = normalize(Number(e.dataTransfer.getData("rotate")) || 0);
+        
+                const condition = rotationConditions[shape] || { equivalentGroups: [[0]] };
+        
+                const matchedGroup = condition.equivalentGroups.find(group =>
+                    group.includes(slotRotate)
+                );
+        
+                const okRotate = matchedGroup && matchedGroup.includes(shapeRotate);
+        
+                if (!okShape || !okRotate) return;
+        
+                const dropped = document.createElement("div");
+                dropped.className = "dropped-shape";
+                dropped.innerHTML = e.dataTransfer.getData("svg");
+        
+                const pos = slotPos[slot.id];
+                const fixed = fixedPosition[slot.id];
+                
+        
+                Object.assign(dropped.style, {
+                    left: fixed ? fixed.left : pos.left,
+                    top: fixed ? fixed.top : pos.top,
+                    width: pos.width + "px",
+                    height: pos.height + "px",
+                    transform: `rotate(${shapeRotate}deg)`
+                });
+        
+                board.appendChild(dropped);
+                slot.dataset.filled = "true";
+                slot.style.display = "none";
+            });
+        });
+                
+        
+        rotateBtn.addEventListener("click", () => {
+          if (!activePiece) return;
+        
+          const shape = activePiece.getAttribute("data-shape");
+          const condition = rotationConditions[shape] || { step: 30 };
+          const rotateValue = condition.step;
+        
+          const cur = Number(activePiece.dataset.rotate) || 0;
+          const next = (cur + rotateValue) % (rotateValue * (condition.equivalentGroups.length));
+          activePiece.dataset.rotate = next;
+          activePiece.style.transform = `rotate(${next}deg)`;
+        });
+        
+      });
+
+      function findAPI(win) {
+        let attempts = 0;
+        const maxAttempts = 50;
+        while (win && attempts < maxAttempts) {
+            if (win.API) {
+                console.log("Found SCORM API (1.2) in window");
+                return win.API;
+            }
+            if (win.API_1484_11) {
+                console.log("Found SCORM API (2004) in window");
+                return win.API_1484_11;
+            }
+            try {
+                console.log("Checking parent window at attempt", attempts);
+                win = win.parent;
+            } catch (e) {
+                console.error("Error accessing parent window:", e);
+                win = null;
+            }
+            attempts++;
+        }
+        if (window.opener && window.opener.API) {
+            console.log("Found SCORM API (1.2) in opener");
+            return window.opener.API;
+        }
+        if (window.opener && window.opener.API_1484_11) {
+            console.log("Found SCORM API (2004) in opener");
+            return window.opener.API_1484_11;
+        }
+        if (window.top && window.top.API) {
+            console.log("Found SCORM API (1.2) in top");
+            return window.top.API;
+        }
+        if (window.top && window.top.API_1484_11) {
+            console.log("Found SCORM API (2004) in top");
+            return window.top.API_1484_11;
+        }
+        for (let i = 0; i < window.frames.length; i++) {
+            try {
+                if (window.frames[i].API) {
+                    console.log("Found SCORM API (1.2) in frame", i);
+                    return window.frames[i].API;
+                }
+                if (window.frames[i].API_1484_11) {
+                    console.log("Found SCORM API (2004) in frame", i);
+                    return window.frames[i].API_1484_11;
+                }
+            } catch (e) {
+                console.error("Error accessing frame", i, ":", e);
+            }
+        }
+        console.error("SCORM API not found after checking all contexts");
+        return null;
+    }
+    function initializeSCORM() {
+        API = findAPI(window)
+        if (!API) {
+            console.error("SCORM API not found");
+            return false;
+        }
+        const result = API.LMSInitialize("");
+        if (result !== "true") {
+            const errorCode = API.LMSGetLastError();
+            const errorString = API.LMSGetErrorString(errorCode);
+            console.error(`SCORM Initialization failed: Error ${errorCode} - ${errorString}`);
+            return false;
+        }
+        console.log("SCORM Initialized");
+        setSCORMValue("cmi.core.lesson_status", "incomplete");
+        return true;
+    }
+    function setSCORMValue(key, value) {
+        if (API) {
+            const result = API.LMSSetValue(key, value);
+            if (result !== "true") {
+                const errorCode = API.LMSGetLastError();
+                const errorString = API.LMSGetErrorString(errorCode);
+                console.error(`Failed to set ${key}: Error ${errorCode} - ${errorString}`);
+                return false;
+            }
+            API.LMSCommit("");
+            return true;
+        }
+        console.error("Cannot set SCORM value: API not available");
+        return false;
+    }
+    let startTime = Date.now();
+    function calculateSessionTime() {
+        const seconds = Math.floor((Date.now() - startTime) / 1000);
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+   async function finishSCORM() {
+        if (API) {
+            const sessionTime = calculateSessionTime();
+            setSCORMValue('cmi.core.lesson_status', 'passed')
+            const result =await API.LMSFinish("");
+            if (result !== "true") {
+                const errorCode = API.LMSGetLastError();
+                const errorString = API.LMSGetErrorString(errorCode);
+                console.error(`SCORM Finish failed: Error ${errorCode} - ${errorString}`);
+                return `SCORM Finish failed: Error ${errorCode} - ${errorString}`;
+            } else {
+                console.log("SCORM Finished");
+            }
+        } else {
+            return "SCORM API not available. Time spent: " + calculateSessionTime();
+        }
+    }
+    initializeSCORM()
+
+     // Access game-specific data
+     const gameData = window.parent.currentGameData || { letters: ['A', 'B', 'C'] };
+     document.getElementById('gameContent').textContent = `Match these letters: ${gameData.letters?.join(', ') || 'No data'}`;
+ 
+     function completeGame() {
+       window.parent.postMessage({ type: 'gameComplete', score: 90 }, '*');
+     }
+    
+    </script>
+  </body>
+</html>
