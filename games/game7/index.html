@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Clock</title>
+    <link rel="stylesheet" href="index.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #ffffff;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #watch {
+        position: relative;
+        width: 300px;
+        height: 300px;
+        margin: 30px auto;
+        cursor: pointer;
+      }
+
+      #dial {
+        height: 320px;
+        width: 326px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 50%;
+        background: #ffeb3b;
+        border: 4px dashed #000000;
+      }
+
+      .outside {
+        height: 380px;
+        width: 380px;
+        position: absolute;
+        top: -30px;
+        left: -30px;
+        right: 0;
+        bottom: 0;
+        border-radius: 50%;
+        background: #ffeb3b;
+        border: solid 1px #dad7d7;
+      }
+
+      #hands,
+      #marks,
+      #grommet,
+      #minute-marks {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      #minute-marks {
+        left: 0px;
+        top: 0px;
+      }
+
+      .hand {
+        position: absolute;
+        bottom: 50%;
+        left: 50%;
+        transform-origin: 50% 100%;
+        z-index: 5;
+      }
+
+      #hour {
+        width: 16px;
+        height: 74px;
+        transform: translateX(-50%) rotate(0deg);
+        transform-origin: 50% 100%;
+        position: absolute;
+        bottom: 50%;
+        left: 50%;
+        z-index: 5;
+      }
+
+      #hour::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 72px;
+        background: rgb(165, 42, 42);
+        border-radius: 4px;
+      }
+
+      #hour::after {
+        display: none;
+      }
+
+      #minute {
+        width: 14px;
+        height: 100px;
+        transform: translateX(-50%) rotate(0deg);
+        transform-origin: 50% 100%;
+        position: absolute;
+        bottom: 50%;
+        left: 50%;
+        z-index: 4;
+      }
+
+      #minute::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 20px;
+        height: 100px;
+        background: #3c3cdb;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #0000ff 20%, #0000ff 80%);
+      }
+
+      #minute::after {
+        display: none;
+      }
+
+      #grommet {
+        height: 20px;
+        width: 20px;
+        position: relative;
+        transform: translate(-50%, -50%);
+        top: 50%;
+        left: 50%;
+        border-radius: 50%;
+        background: #a7d8eb;
+        z-index: 10;
+      }
+
+      .inner-circle {
+        height: 15px;
+        width: 15px;
+        background: rgb(49, 48, 48);
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .mark {
+        position: absolute;
+        color: #a52a2a;
+        font-family: Arial, sans-serif;
+        font-size: 30px;
+        font-weight: bold;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+      }
+
+      .minute-mark {
+        position: absolute;
+        color: #000000;
+        font-family: Arial, sans-serif;
+        font-size: 15px;
+        font-weight: bold;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+        background: #ffeb3b;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .display-info {
+        margin: 20px 0;
+        font-size: 25px;
+        font-weight: 700;
+        color: #333;
+        text-align: center;
+        display: flex;
+        gap: 200px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .display-info-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .display-info-box p {
+        margin-bottom: 10px;
+      }
+
+      .display-info-box button {
+        color: white;
+        border: 2px solid #000000;
+        font-size: 20px;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 4px;
+        width: 40px;
+      }
+
+      .btn1 {
+        background: rgb(211, 16, 16);
+      }
+
+      .btn2 {
+        background: #28e400;
+      }
+
+      .display-info-box button:hover {
+        background: #757373;
+      }
+
+      .digital-clock {
+        background: #28e400;
+        border: 8px solid #28e400;
+        border-radius: 20px;
+        padding: 15px 15px;
+        width: max-content;
+        margin: 10px auto;
+        position: relative;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .digital-clock input {
+        background-color: #fdf06e;
+        color: #b22222;
+        border: 5px solid #444;
+        font-size: 40px;
+        font-family: "DS-Digital", sans-serif;
+        text-align: center;
+        border-radius: 10px;
+        padding: 10px 20px;
+        width: 140px;
+        outline: none;
+        box-shadow: inset 0 0 8px #bbb;
+      }
+
+      .digital-clock::before,
+      .digital-clock::after {
+        content: "";
+        position: absolute;
+        bottom: -15px;
+        width: 25px;
+        height: 15px;
+        background-color: #28e400;
+        border-radius: 4px;
+      }
+
+      .digital-clock::before {
+        left: 25px;
+      }
+
+      .digital-clock::after {
+        right: 25px;
+      }
+
+      @media (max-width: 600px) {
+        .display-info {
+          gap: 20px;
+        }
+      }
+
+      .cross {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        cursor: pointer;
+        background: rgb(211, 16, 16);
+        color: white;
+        padding: 5px 10px;
+        border: 2px solid #000;
+        border-radius: 5px;
+        z-index: 9999;
+      }
+
+      .cross:hover {
+        background: #757373;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="cross">X</div>
+      <div id="watch">
+        <div class="outside"></div>
+        <div id="dial">
+          <div id="marks"></div>
+          <div id="minute-marks"></div>
+          <div id="hands">
+            <div id="hour" class="hand">
+              <svg
+                width="34"
+                height="27"
+                viewBox="0 0 425 387"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style="
+                  position: absolute;
+                  top: -16px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  z-index: 5;
+                  pointer-events: none;
+                "
+              >
+                <path
+                  d="M142.364 40.1108C173.639 -13.3703 250.933 -13.3702 282.208 40.1108L413.372 264.404C444.949 318.402 406.004 386.293 343.45 386.293H81.1222C18.5682 386.293 -20.3771 318.402 11.2002 264.404L142.364 40.1108Z"
+                  fill="rgb(165, 42, 42)"
+                />
+              </svg>
+            </div>
+            <div id="minute" class="hand">
+              <svg
+                width="34"
+                height="27"
+                viewBox="0 0 425 387"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style="
+                  position: absolute;
+                  top: -16px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  z-index: 5;
+                  pointer-events: none;
+                "
+              >
+                <path
+                  d="M142.364 40.1108C173.639 -13.3703 250.933 -13.3702 282.208 40.1108L413.372 264.404C444.949 318.402 406.004 386.293 343.45 386.293H81.1222C18.5682 386.293 -20.3771 318.402 11.2002 264.404L142.364 40.1108Z"
+                  fill="#0000FF"
+                />
+              </svg>
+            </div>
+            <div id="grommet">
+              <div class="inner-circle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="display-info">
+        <div class="display-info-box">
+          <p>Hours: <span id="displayHour">4</span></p>
+          <div>
+            <button class="btn1" onclick="changeTime('hour', 1)">↑</button>
+            <button class="btn1" onclick="changeTime('hour', -1)">↓</button>
+          </div>
+        </div>
+        <div class="display-info-box">
+          <p>Minutes: <span id="displayMinute">2</span></p>
+          <div>
+            <button class="btn2" onclick="changeTime('minute', 1)">↑</button>
+            <button class="btn2" onclick="changeTime('minute', -1)">↓</button>
+          </div>
+        </div>
+      </div>
+      <div class="digital-clock">
+        <input type="text" id="digitalDisplay" readonly />
+      </div>
+    </div>
+    <script>
+      let hour = 9;
+      let minute = 0;
+      let isDragging = null;
+      let API = null;
+      let startTime = Date.now();
+
+      function calculateSessionTime() {
+        const seconds = Math.floor((Date.now() - startTime) / 1000);
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+          2,
+          "0"
+        )}:${String(secs).padStart(2, "0")}`;
+      }
+
+      function calculateScore() {
+        return 100;
+      }
+
+      function findAPI(win) {
+        let attempts = 0;
+        const maxAttempts = 50;
+        while (win && attempts < maxAttempts) {
+          if (win.API) {
+            console.log("Found SCORM API (1.2) in window");
+            return win.API;
+          }
+          if (win.API_1484_11) {
+            console.log("Found SCORM API (2004) in window");
+            return win.API_1484_11;
+          }
+          try {
+            console.log("Checking parent window at attempt", attempts);
+            win = win.parent;
+          } catch (e) {
+            console.error("Error accessing parent window:", e);
+            win = null;
+          }
+          attempts++;
+        }
+        if (window.opener && window.opener.API) {
+          console.log("Found SCORM API (1.2) in opener");
+          return window.opener.API;
+        }
+        if (window.opener && window.opener.API_1484_11) {
+          console.log("Found SCORM API (2004) in opener");
+          return window.opener.API_1484_11;
+        }
+        if (window.top && window.top.API) {
+          console.log("Found SCORM API (1.2) in top");
+          return window.top.API;
+        }
+        if (window.top && window.top.API_1484_11) {
+          console.log("Found SCORM API (2004) in top");
+          return window.top.API_1484_11;
+        }
+        for (let i = 0; i < window.frames.length; i++) {
+          try {
+            if (window.frames[i].API) {
+              console.log("Found SCORM API (1.2) in frame", i);
+              return window.frames[i].API;
+            }
+            if (window.frames[i].API_1484_11) {
+              console.log("Found SCORM API (2004) in frame", i);
+              return window.frames[i].API_1484_11;
+            }
+          } catch (e) {
+            console.error("Error accessing frame", i, ":", e);
+          }
+        }
+        console.error("SCORM API not found after checking all contexts");
+        return null;
+      }
+
+      function initializeSCORM() {
+        API = findAPI(window);
+        if (!API) {
+          console.error("SCORM API not found");
+          return false;
+        }
+        const result = API.LMSInitialize("");
+        if (result !== "true") {
+          const errorCode = API.LMSGetLastError();
+          const errorString = API.LMSGetErrorString(errorCode);
+          console.error(
+            `SCORM Initialization failed: Error ${errorCode} - ${errorString}`
+          );
+          return false;
+        }
+        console.log("SCORM Initialized");
+        setSCORMValue("cmi.core.lesson_status", "incomplete");
+        return true;
+      }
+
+      function setSCORMValue(key, value) {
+        if (API) {
+          const result = API.LMSSetValue(key, value);
+          if (result !== "true") {
+            const errorCode = API.LMSGetLastError();
+            const errorString = API.LMSGetErrorString(errorCode);
+            console.error(
+              `Failed to set ${key}: Error ${errorCode} - ${errorString}`
+            );
+            return false;
+          }
+          API.LMSCommit("");
+          return true;
+        }
+        console.error("Cannot set SCORM value: API not available");
+        return false;
+      }
+
+      async function finishSCORM() {
+        if (API) {
+          const sessionTime = calculateSessionTime();
+          setSCORMValue("cmi.core.lesson_status", "passed");
+          const result = await API.LMSFinish("");
+          if (result !== "true") {
+            const errorCode = API.LMSGetLastError();
+            const errorString = API.LMSGetErrorString(errorCode);
+            console.error(
+              `SCORM Finish failed: Error ${errorCode} - ${errorString}`
+            );
+            return `SCORM Finish failed: Error ${errorCode} - ${errorString}`;
+          } else {
+            console.log("SCORM Finished");
+          }
+        } else {
+          return (
+            "SCORM API not available. Time spent: " + calculateSessionTime()
+          );
+        }
+      }
+
+      const watch = document.getElementById("watch");
+      const hourHand = document.getElementById("hour");
+      const minuteHand = document.getElementById("minute");
+      const digitalDisplay = document.getElementById("digitalDisplay");
+      const marks = document.getElementById("marks");
+      const minuteMarks = document.getElementById("minute-marks");
+      const crossButton = document.querySelector(".cross");
+
+      function addMarks() {
+        for (let i = 1; i <= 12; i++) {
+          const angle = (i - 3) * 30;
+          const rad = (angle * Math.PI) / 180;
+          const radius = 130;
+          const x = 155 + radius * Math.cos(rad);
+          const y = 155 + radius * Math.sin(rad);
+          const mark = document.createElement("div");
+          mark.className = "mark";
+          mark.innerText = i;
+          mark.style.left = `${x}px`;
+          mark.style.top = `${y}px`;
+          mark.style.transform = `translate(-50%, -50%)`;
+          marks.appendChild(mark);
+        }
+
+        const minuteValues = {
+          12: 60,
+          1: 5,
+          2: 10,
+          3: 15,
+          4: 20,
+          5: 25,
+          6: 30,
+          7: 35,
+          8: 40,
+          9: 45,
+          10: 50,
+          11: 55,
+        };
+
+        for (let i = 1; i <= 12; i++) {
+          const mark = document.createElement("div");
+          mark.className = "minute-mark";
+          mark.innerText = minuteValues[i];
+
+          // Manually set top and left for each minute mark
+          switch (i) {
+            case 1: // 5
+              mark.style.top = "20px";
+              mark.style.left = "234px";
+              mark.style.width = "35px";
+              mark.style.height = "40px";
+              break;
+            case 2: // 10
+              mark.style.top = "76px";
+              mark.style.left = "295px";
+              mark.style.width = "64px";
+              mark.style.height = "44px";
+              break;
+            case 3: // 15
+              mark.style.top = "155px";
+              mark.style.left = "315px";
+              mark.style.width = "38px";
+              mark.style.height = "34px";
+              break;
+            case 4: // 20
+              mark.style.top = "230px";
+              mark.style.left = "295px";
+              mark.style.width = "35px";
+              mark.style.height = "58px";
+              break;
+            case 5: // 25
+            
+              mark.style.top = "292px";
+              mark.style.left = "235px";
+              mark.style.width = "44px";
+              mark.style.height = "62px";
+              break;
+            case 6: // 30
+              mark.style.top = "315px";
+              mark.style.left = "155px";
+              mark.style.width = "38px";
+              mark.style.height = "33px";
+              break;
+            case 7: // 35
+              mark.style.top = "290px";
+              mark.style.left = "77px";
+              mark.style.width = "86px";
+              mark.style.height = "27px";
+              break;
+            case 8: // 40
+              mark.style.top = "236px";
+              mark.style.left = "16px";
+              mark.style.width = "29px";
+              mark.style.height = "35px";
+              break;
+            case 9: // 45
+              mark.style.top = "152px";
+              mark.style.left = "-4px";
+              mark.style.width = "25px";
+              mark.style.height = "46px";
+              break;
+            case 10: // 50
+              mark.style.top = "71px";
+              mark.style.left = "21px";
+              mark.style.width = "25px";
+              mark.style.height = "39px";
+              break;
+            case 11: // 55
+              mark.style.top = "20px";
+              mark.style.left = "77px";
+              mark.style.width = "33px";
+              mark.style.height = "33px";
+              break;
+            case 12: // 60
+              mark.style.top = "0px";
+              mark.style.left = "155px";
+              mark.style.width = "47px";
+              mark.style.height = "32px";
+              break;
+          }
+
+          mark.style.transform = `translate(-50%, -50%)`;
+          minuteMarks.appendChild(mark);
+        }
+      }
+
+      function updateClock() {
+        let displayHour = hour === 0 ? 12 : hour;
+        const hourAngle = ((displayHour % 12) + minute / 60) * 30;
+        const minuteAngle = minute * 6;
+        hourHand.style.transform = `translateX(-50%) rotate(${hourAngle}deg)`;
+        minuteHand.style.transform = `translateX(-50%) rotate(${minuteAngle}deg)`;
+        document.getElementById("displayHour").innerText = displayHour;
+        document.getElementById("displayMinute").innerText = minute;
+        digitalDisplay.value = `${String(displayHour).padStart(
+          2,
+          "0"
+        )}:${String(minute).padStart(2, "0")}`;
+      }
+
+      function changeTime(type, value) {
+        if (type === "hour") {
+          hour = (hour + value + 12) % 12;
+          if (hour === 0) hour = 12;
+        } else if (type === "minute") {
+          minute = (minute + value + 60) % 60;
+          if (value > 0 && minute === 0) {
+            hour = (hour + 1) % 12;
+            if (hour === 0) hour = 12;
+          } else if (value < 0 && minute === 59) {
+            hour = (hour + 11) % 12;
+            if (hour === 0) hour = 12;
+          }
+        }
+        updateClock();
+      }
+
+      function getAngleFromMouse(event) {
+        const rect = watch.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const mouseX = event.clientX;
+        const mouseY = event.clientY;
+        const deltaX = mouseX - centerX;
+        const deltaY = centerY - mouseY;
+        let angle = Math.atan2(deltaX, deltaY) * (180 / Math.PI);
+        if (angle < 0) angle += 360;
+        return angle;
+      }
+
+      watch.addEventListener("mousedown", (event) => {
+        const angle = getAngleFromMouse(event);
+        const hourAngle = ((hour % 12) + minute / 60) * 30;
+        const minuteAngle = minute * 6;
+        const hourDiff = Math.min(
+          (angle - hourAngle + 360) % 360,
+          (hourAngle - angle + 360) % 360
+        );
+        const minuteDiff = Math.min(
+          (angle - minuteAngle + 360) % 360,
+          (minuteAngle - angle + 360) % 360
+        );
+        if (hourDiff < minuteDiff && hourDiff < 30) {
+          isDragging = "hour";
+        } else if (minuteDiff < 30) {
+          isDragging = "minute";
+        }
+      });
+
+      watch.addEventListener("mousemove", (event) => {
+        if (!isDragging) return;
+        const angle = getAngleFromMouse(event);
+        if (isDragging === "hour") {
+          hour = Math.round(angle / 30) % 12;
+          if (hour === 0) hour = 12;
+        } else if (isDragging === "minute") {
+          const prevMinute = minute;
+          minute = Math.round(angle / 6) % 60;
+          if (prevMinute < 15 && minute >= 45) {
+            hour = (hour + 11) % 12;
+            if (hour === 0) hour = 12;
+          } else if (prevMinute >= 45 && minute < 15) {
+            hour = (hour + 1) % 12;
+            if (hour === 0) hour = 12;
+          }
+        }
+        updateClock();
+      });
+
+      watch.addEventListener("mouseup", () => {
+        isDragging = null;
+        if (API) {
+          API.LMSCommit("");
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        isDragging = null;
+      });
+
+      crossButton.addEventListener("click", () => {
+        const completionMessage = finishSCORM();
+        console.log(completionMessage);
+      });
+      window.onbeforeunload = function () {
+        finishSCORM();
+      };
+
+      initializeSCORM();
+      addMarks();
+      updateClock();
+    </script>
+  </body>
+</html>
