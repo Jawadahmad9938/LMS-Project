@@ -14,36 +14,53 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        align-items: center;
         gap: 3rem;
         padding: 1rem 0rem;
         font-family: sans-serif;
         background: #fafafa;
-         
-        height: 100vh; 
+        height: 100vh;
+      
+        /* ✅ Allow horizontal scroll */
+        overflow-x: auto;
+        align-items: flex-start; /* So horizontal scroll works correctly */
       }
       
       h2 {
         font-weight: 600;
       }
       
+      /* ✅ Wrap board in scrollable container */
+      .board-wrapper {
+        width: 100%;
+        overflow-x: auto;
+      }
+      
+      /* ✅ Board is large and scrolls */
       .board {
         display: flex;
         gap: 8rem;
         flex: 1 0 auto;
         position: relative;
-        width: 90vw;
-        height: 90vh;
+        width: max-content; /* Instead of fixed vw, let it grow with content */
+        height: 186vh;
         border: 1px solid black;
         background: #fff;
-        
       }
       
+      /* ✅ Wrap palette in scrollable container */
+      .palette-wrapper {
+        width: 100%;
+        overflow-x: auto;
+      }
+      
+      /* ✅ Palette scrolls left/right based on content */
       .palette {
-        margin-top: auto;
         display: flex;
         align-items: center;
         gap: 2rem;
+        padding: 1rem;
+        flex-wrap: nowrap;
+        width: max-content;
       }
       
       .slot {
@@ -95,6 +112,7 @@
         stroke: #000;
         stroke-width: 4;
       }
+      
     </style>
   </head>
 
