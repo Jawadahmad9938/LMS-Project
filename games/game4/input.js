@@ -1,15 +1,15 @@
 const inputData =
 {
   "background": {
-    "name": "/games/game4/BackgroundImage2.jpg"
+    "name": "./assets/background image.jpg"
   },
   "objectImage": {
-    "name": "/games/game4/Objectimage.png"
+    "name": "./assets/Objectimage2.png"
   },
   "clickSound": {
-    "name": "/games/game4/beep-329314.mp3"
+    "name": "./assets/beep-329314.mp3"
   },
-  "totalObjects": 20,
-  "correctObjects": 5,
+  "totalObjects": 7,
+  "correctObjects": 2,
   "speed": 5
 }

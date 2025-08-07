@@ -1,106 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Teacher Input</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: 30px auto;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      background: #f9f9f9;
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    input, button {
-      margin-top: 5px;
-      width: 100%;
-      padding: 8px;
-    }
-    button {
-      margin-top: 20px;
-      background: #007bff;
-      color: white;
-      font-size: 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <h2>Darakoi - Teacher Panel</h2>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Teacher Input</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 600px;
+        margin: 30px auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        background: #f9f9f9;
+      }
+      label {
+        display: block;
+        margin-top: 15px;
+        font-weight: bold;
+      }
+      input,
+      button {
+        margin-top: 5px;
+        width: 100%;
+        padding: 8px;
+      }
+      button {
+        margin-top: 20px;
+        background: #007bff;
+        color: white;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Darakoi - Teacher Panel</h2>
 
-  <label>Upload Background Image</label>
-  <input type="file" id="bgInput" accept="image/*">
+    <label>Upload Background Image</label>
+    <input type="file" id="bgInput" accept="image/*" />
 
-  <label>Upload Object Image</label>
-  <input type="file" id="objInput" accept="image/*">
+    <label>Upload Object Image</label>
+    <input type="file" id="objInput" accept="image/*" />
 
-  <label>Upload Click Sound</label>
-  <input type="file" id="soundInput" accept="audio/*">
+    <label>Upload Click Sound</label>
+    <input type="file" id="soundInput" accept="audio/*" />
 
-  <label>Total Objects</label>
-  <input type="number" id="totalObjects" min="1" value="10">
+    <label>Total Objects</label>
+    <input type="number" id="totalObjects" min="1" value="10" />
 
-  <label>Correct Objects</label>
-  <input type="number" id="correctObjects" min="1" value="3">
+    <label>Correct Objects</label>
+    <input type="number" id="correctObjects" min="1" value="3" />
 
-  <label>Movement Speed (1-10)</label>
-  <input type="number" id="speed" min="1" max="10" value="3">
+    <label>Movement Speed (1-10)</label>
+    <input type="number" id="speed" min="1" max="10" value="3" />
 
-  <button onclick="generateInputJSON()">Download input.json</button>
+    <button onclick="generateJSON()">Publish</button>
 
-  <script>
-    function generateInputJSON() {
-      const bgFile = document.getElementById('bgInput').files[0];
-      const objFile = document.getElementById('objInput').files[0];
-      const sndFile = document.getElementById('soundInput').files[0];
-      const total = +document.getElementById('totalObjects').value;
-      const correct = +document.getElementById('correctObjects').value;
-      const speed = +document.getElementById('speed').value;
+    <script>
+      window.uploadedFiles = [];
+      const assetPath = "assets";
 
-      if (!bgFile || !objFile || !sndFile) {
-        alert("Please upload all 3 files.");
-        return;
+      function generateUniqueName() {
+        const dateTime = Date.now();
+        const random5Digit = Math.floor(10000 + Math.random() * 90000);
+        return `${dateTime}${random5Digit}`;
       }
 
-      const inputData = {
-        background: { name: bgFile.name },
-        objectImage: { name: objFile.name },
-        clickSound: { name: sndFile.name },
-        totalObjects: total,
-        correctObjects: correct,
-        speed
-      };
+      function handleFile(fileType) {
+        const splited = fileType.split(".");
+        const keyValue = splited[splited.length - 1];
+        const findFile = window.uploadedFiles?.find(
+          (p) => p?.dataName == keyValue
+        );
+        if (window.uploadedFiles.length > 0 && findFile) {
+          return assetPath + "/" + findFile.fileName;
+        } else {
+          const splited = fileType.split(".");
+          let newData = inputData;
+          const joined = splited.map((key) => {
+            newData = newData[key];
+          });
+          return newData;
+        }
+      }
 
-      const blob = new Blob([JSON.stringify(inputData, null, 2)], {
-        type: "application/json"
-      });
+      function handleValue(valueName) {
+        const value = parseInt(document.getElementById(valueName).value);
+        if (value) return value;
+        else {
+          return "";
+        }
+      }
 
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "input.json";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      function generateJSON() {
+        const bgFile = document.getElementById("bgInput").files[0];
+        const objFile = document.getElementById("objInput").files[0];
+        const sndFile = document.getElementById("soundInput").files[0];
 
-     
-    }
+        if (!bgFile || !objFile || !sndFile) {
+          alert("Please upload all 3 files.");
+          return;
+        }
 
-    // Access game-specific data
-    const gameData = window.parent.currentGameData || { letters: ['A', 'B', 'C'] };
-    document.getElementById('gameContent').textContent = `Match these letters: ${gameData.letters?.join(', ') || 'No data'}`;
+        const getFileExtension = (file) => {
+          const fileNameParts = file.name.split(".");
+          return fileNameParts.length > 1
+            ? fileNameParts.pop().toLowerCase()
+            : "";
+        };
 
-    function completeGame() {
-      window.parent.postMessage({ type: 'gameComplete', score: 90 }, '*');
-    }
-  </script>
-</body>
+        const bgExtension = getFileExtension(bgFile);
+        const objExtension = getFileExtension(objFile);
+        const sndExtension = getFileExtension(sndFile);
+
+        const bgUniqueName = `${generateUniqueName()}.${bgExtension}`;
+        const objUniqueName = `${generateUniqueName()}.${objExtension}`;
+        const sndUniqueName = `${generateUniqueName()}.${sndExtension}`;
+
+        window.uploadedFiles.push(
+          {
+            dataName: "background",
+            type: "inputImage",
+            file: bgFile,
+            fileName: bgUniqueName,
+          },
+          {
+            dataName: "objectImage",
+            type: "inputImage",
+            file: objFile,
+            fileName: objUniqueName,
+          },
+          {
+            dataName: "clickSound",
+            type: "inputAudio",
+            file: sndFile,
+            fileName: sndUniqueName,
+          }
+        );
+
+        const inputData = {
+          background: { name: handleFile("background") },
+          objectImage: { name: handleFile("objectImage") },
+          clickSound: { name: handleFile("clickSound") },
+          totalObjects: handleValue("totalObjects"),
+          correctObjects: handleValue("correctObjects"),
+          speed: handleValue("speed"),
+        };
+
+        try {
+          window.parent.postMessage(
+            {
+              type: "saveValues",
+              inputData: inputData,
+            },
+            window.location.origin
+          );
+          console.log("Data sent to parent window:", inputData);
+          console.log("Uploaded files:", window.uploadedFiles);
+          alert("Data successfully sent to parent window!");
+        } catch (error) {
+          console.error("Error sending postMessage:", error);
+          alert("Failed to send data to parent window.");
+        }
+      }
+    </script>
+  </body>
 </html>

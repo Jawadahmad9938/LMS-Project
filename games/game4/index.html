@@ -1,206 +1,316 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Student Game</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-    #gameArea {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      background-size: cover;
-      background-position: center;
-    }
-    .object {
-      position: absolute;
-      width: 100px;
-      height: 100px;
-      background-repeat: no-repeat;
-      background-size: contain;
-      transition: transform 0.25s ease;
-      animation: float 6s infinite ease-in-out;
-      cursor: pointer;
-    }
-    .clicked { filter: drop-shadow(0 0 8px red); }
-    .original.clicked { filter: drop-shadow(0 0 8px limegreen); }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Student Game</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      #gameArea {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background-size: cover;
+        background-position: center;
+      }
+      .object {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        background-repeat: no-repeat;
+        background-size: contain;
+        transition: transform 0.25s ease;
+        animation: float 6s infinite ease-in-out;
+        cursor: pointer;
+      }
+      .clicked {
+        filter: drop-shadow(0 0 8px red);
+      }
+      .original.clicked {
+        filter: drop-shadow(0 0 8px limegreen);
+      }
 
-    @keyframes float {
-      0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(1deg); }
-      50% { transform: rotate(-1deg); }
-      75% { transform: rotate(0.5deg); }
-    }
-  </style>
-
-</head>
-<body>
-  <div id="gameArea"></div>
-  <audio id="clickSound"></audio>
-  
-  <script src="input.js"></script>
-  <script>
-    const gameArea = document.getElementById("gameArea");
-    const clickSound = document.getElementById("clickSound");
-
-    gameArea.style.background = `url('${inputData.background.name}') no-repeat center center`;
-    gameArea.style.backgroundSize = 'cover';
-    clickSound.src = inputData.clickSound.name;
-
-    const objects = [];
-    const originalObjects = [];
-    let correctClicks = 0;
-
-    function handleClick(e) {
-      const clickedEl = e.target;
-      clickSound.play();
-      clickedEl.classList.add("clicked");
-      setTimeout(() => clickedEl.classList.remove("clicked"), 300);
-
-      if (clickedEl.classList.contains("original") && !clickedEl.clicked) {
-        clickedEl.clicked = true;
-        correctClicks++;
-
-        if (correctClicks === inputData.correctObjects) {
-          console.log("Game completed! All correct objects clicked.");
-          scormHandler.finish(true); 
+      @keyframes float {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        25% {
+          transform: rotate(1deg);
+        }
+        50% {
+          transform: rotate(-1deg);
+        }
+        75% {
+          transform: rotate(0.5deg);
         }
       }
-    }
+     
+    </style>
+  </head>
+  <body>
+    <div id="gameArea"></div>
+    <!-- <button id="close-btn" title="Exit">&#10005;</button> -->
+    <audio id="clickSound"></audio>
 
-    function moveAllObjects() {
-      for (let i = 0; i < objects.length; i++) {
-        const obj = objects[i];
-        obj.x += obj.vx;
-        obj.y += obj.vy;
+    <script src="input.js"></script>
+    <script>
+      const gameArea = document.getElementById("gameArea");
+      const clickSound = document.getElementById("clickSound");
 
-        if (obj.x <= 0 || obj.x >= gameArea.clientWidth - 100) obj.vx *= -1;
-        if (obj.y <= 0 || obj.y >= gameArea.clientHeight - 100) obj.vy *= -1;
+      gameArea.style.background = `url('${inputData.background.name}') no-repeat center center`;
+      gameArea.style.backgroundSize = "cover";
+      clickSound.src = inputData.clickSound.name;
 
-        obj.x = Math.max(0, Math.min(obj.x, gameArea.clientWidth - 100));
-        obj.y = Math.max(0, Math.min(obj.y, gameArea.clientHeight - 100));
-        obj.el.style.left = `${obj.x}px`;
-        obj.el.style.top = `${obj.y}px`;
-      }
+      const objects = [];
+      const originalObjects = [];
+      let correctClicks = 0;
+      let canClickOriginals = false;
 
-      // Simple collision bounce
-      for (let i = 0; i < objects.length; i++) {
-        for (let j = i + 1; j < objects.length; j++) {
-          const a = objects[i];
-          const b = objects[j];
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 70) {
-            const angle = Math.atan2(dy, dx);
-            const speedA = Math.sqrt(a.vx ** 2 + a.vy ** 2);
-            const speedB = Math.sqrt(b.vx ** 2 + b.vy ** 2);
-            a.vx = -Math.cos(angle) * speedB;
-            a.vy = -Math.sin(angle) * speedB;
-            b.vx = Math.cos(angle) * speedA;
-            b.vy = Math.sin(angle) * speedA;
+      function handleClick(e) {
+        const clickedEl = e.target;
+        if (clickedEl.classList.contains("original") && !canClickOriginals) {
+          return; 
+        }
+
+        clickSound.play();
+        clickedEl.classList.add("clicked");
+        setTimeout(() => clickedEl.classList.remove("clicked"), 300);
+
+        if (clickedEl.classList.contains("original") && !clickedEl.clicked) {
+          clickedEl.clicked = true;
+          correctClicks++;
+
+          if (correctClicks === inputData.correctObjects) {
+            console.log("Game completed! All correct objects clicked.");
+            finishSCORM();
           }
         }
       }
 
-      requestAnimationFrame(moveAllObjects);
-    }
+      function moveAllObjects() {
+        for (let i = 0; i < objects.length; i++) {
+          const obj = objects[i];
+          obj.x += obj.vx;
+          obj.y += obj.vy;
 
-    function createObject(isNew) {
-      const el = document.createElement("div");
-      el.classList.add("object");
-      el.style.backgroundImage = `url('${inputData.objectImage.name}')`;
-      if (isNew) el.classList.add("new");
-      else el.classList.add("original");
+          if (obj.x <= 0 || obj.x >= gameArea.clientWidth - 100) obj.vx *= -1;
+          if (obj.y <= 0 || obj.y >= gameArea.clientHeight - 100) obj.vy *= -1;
 
-      const x = Math.random() * (gameArea.clientWidth - 100);
-      const y = Math.random() * (gameArea.clientHeight - 100);
-      el.style.left = `${x}px`;
-      el.style.top = `${y}px`;
+          obj.x = Math.max(0, Math.min(obj.x, gameArea.clientWidth - 100));
+          obj.y = Math.max(0, Math.min(obj.y, gameArea.clientHeight - 100));
+          obj.el.style.left = `${obj.x}px`;
+          obj.el.style.top = `${obj.y}px`;
+        }
 
-      const velocity = {
-        x: (Math.random() - 0.5) * inputData.speed,
-        y: (Math.random() - 0.5) * inputData.speed
-      };
+        // Simple collision bounce
+        for (let i = 0; i < objects.length; i++) {
+          for (let j = i + 1; j < objects.length; j++) {
+            const a = objects[i];
+            const b = objects[j];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 70) {
+              const angle = Math.atan2(dy, dx);
+              const speedA = Math.sqrt(a.vx ** 2 + a.vy ** 2);
+              const speedB = Math.sqrt(b.vx ** 2 + b.vy ** 2);
+              a.vx = -Math.cos(angle) * speedB;
+              a.vy = -Math.sin(angle) * speedB;
+              b.vx = Math.cos(angle) * speedA;
+              b.vy = Math.sin(angle) * speedA;
+            }
+          }
+        }
 
-      el.addEventListener("click", handleClick);
-      gameArea.appendChild(el);
-
-      if (!isNew) originalObjects.push(el);
-      objects.push({ el, x, y, vx: velocity.x, vy: velocity.y, isNew });
-    }
-
-    function startGame() {
-      const total = inputData.totalObjects;
-      const correct = inputData.correctObjects;
-
-      for (let i = 0; i < correct; i++) {
-        createObject(false);
+        requestAnimationFrame(moveAllObjects);
       }
 
-      requestAnimationFrame(moveAllObjects);
+      function createObject(isNew) {
+        const el = document.createElement("div");
+        el.classList.add("object");
+        el.style.backgroundImage = `url('${inputData.objectImage.name}')`;
+        if (isNew) el.classList.add("new");
+        else el.classList.add("original");
 
-      setTimeout(() => {
-        for (let i = correct; i < total; i++) {
-          createObject(true);
+        const x = Math.random() * (gameArea.clientWidth - 100);
+        const y = Math.random() * (gameArea.clientHeight - 100);
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+
+        const velocity = {
+          x: (Math.random() - 0.5) * inputData.speed,
+          y: (Math.random() - 0.5) * inputData.speed,
+        };
+
+        el.addEventListener("click", handleClick);
+        gameArea.appendChild(el);
+
+        if (!isNew) originalObjects.push(el);
+        objects.push({ el, x, y, vx: velocity.x, vy: velocity.y, isNew });
+      }
+
+      function startGame() {
+        const total = inputData.totalObjects;
+        const correct = inputData.correctObjects;
+
+        for (let i = 0; i < correct; i++) {
+          createObject(false);
         }
-      }, 3000);
-    }
 
-    startGame();
+        requestAnimationFrame(moveAllObjects);
 
-    //Scorm Handling
+        setTimeout(() => {
+          for (let i = correct; i < total; i++) {
+            createObject(true);
+          }
+          canClickOriginals = true; 
+        }, 3000);
+      }
 
-    const scormHandler = {
-      API: window.API || window.API_1484_11 || null,
-      scormCompleted: false,
-      startTime: Date.now(),
+      startGame();
 
-      finish(isCorrect) {
-        if (!this.API) {
-          console.log("SCORM API not found. Skipping LMS finish.");
-          return;
+      // Pre-defined SCORM functions
+      function findAPI(win) {
+        let attempts = 0;
+        const maxAttempts = 50;
+        while (win && attempts < maxAttempts) {
+          if (win.API) {
+            console.log("Found SCORM API (1.2) in window");
+            return win.API;
+          }
+          if (win.API_1484_11) {
+            console.log("Found SCORM API (2004) in window");
+            return win.API_1484_11;
+          }
+          try {
+            win = win.parent;
+          } catch (e) {
+            console.error("Error accessing parent window:", e);
+            win = null;
+          }
+          attempts++;
         }
-
-        if (this.scormCompleted) {
-          console.log("SCORM already marked as completed.");
-          return;
+        if (window.opener && window.opener.API) {
+          console.log("Found SCORM API (1.2) in opener");
+          return window.opener.API;
         }
+        if (window.opener && window.opener.API_1484_11) {
+          console.log("Found SCORM API (2004) in opener");
+          return window.opener.API_1484_11;
+        }
+        if (window.top && window.top.API) {
+          console.log("Found SCORM API (1.2) in top");
+          return window.top.API;
+        }
+        if (window.top && window.top.API_1484_11) {
+          console.log("Found SCORM API (2004) in top");
+          return window.top.API_1484_11;
+        }
+        for (let i = 0; i < window.frames.length; i++) {
+          try {
+            if (window.frames[i].API) {
+              console.log("Found SCORM API (1.2) in frame", i);
+              return window.frames[i].API;
+            }
+            if (window.frames[i].API_1484_11) {
+              console.log("Found SCORM API (2004) in frame", i);
+              return window.frames[i].API_1484_11;
+            }
+          } catch (e) {
+            console.error("Error accessing frame", i, ":", e);
+          }
+        }
+        console.error("SCORM API not found after checking all contexts");
+        return null;
+      }
 
-        const score = isCorrect ? 100 : 0;
-        const status = isCorrect ? "passed" : "failed";
-
-        this.API.LMSSetValue("cmi.core.lesson_status", status);
-        this.API.LMSSetValue("cmi.core.score.raw", score);
-        this.API.LMSSetValue("cmi.core.score.min", 0);
-        this.API.LMSSetValue("cmi.core.score.max", 100);
-
-        const totalSeconds = Math.floor((Date.now() - this.startTime) / 1000);
-        const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
-        const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-        const s = String(totalSeconds % 60).padStart(2, "0");
-        const sessionTime = `${h}:${m}:${s}`;
-
-        this.API.LMSSetValue("cmi.core.session_time", sessionTime);
-        this.API.LMSCommit("");
-        const result = this.API.LMSFinish("");
-
+      function initializeSCORM() {
+        API = findAPI(window);
+        if (!API) {
+          console.error("SCORM API not found");
+          return false;
+        }
+        const result = API.LMSInitialize("");
         if (result !== "true") {
-          const code = this.API.LMSGetLastError();
-          const msg = this.API.LMSGetErrorString(code);
-          console.error(`Finish failed: ${msg}`);
-        } else {
-          console.log(`SCORM Finished: status=${status}, score=${score}`);
+          const errorCode = API.LMSGetLastError();
+          const errorString = API.LMSGetErrorString(errorCode);
+          console.error(
+            `SCORM Initialization failed: Error ${errorCode} - ${errorString}`
+          );
+          return false;
         }
-        this.scormCompleted = true;
+        console.log("SCORM Initialized");
+        setSCORMValue("cmi.core.lesson_status", "incomplete");
+        return true;
       }
-    };
 
-    
-  </script>
-</body>
+      function setSCORMValue(key, value) {
+        if (API) {
+          const result = API.LMSSetValue(key, value);
+          if (result !== "true") {
+            const errorCode = API.LMSGetLastError();
+            const errorString = API.LMSGetErrorString(errorCode);
+            console.error(
+              `Failed to set ${key}: Error ${errorCode} - ${errorString}`
+            );
+            return false;
+          }
+          API.LMSCommit("");
+          return true;
+        }
+        console.error("Cannot set SCORM value: API not available");
+        return false;
+      }
+
+      let startTime = Date.now();
+
+      function calculateSessionTime() {
+        const seconds = Math.floor((Date.now() - startTime) / 1000);
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+          2,
+          "0"
+        )}:${String(secs).padStart(2, "0")}`;
+      }
+
+      async function finishSCORM() {
+        if (API) {
+          const sessionTime = calculateSessionTime();
+          setSCORMValue("cmi.core.lesson_status", "passed");
+          const result = await API.LMSFinish("");
+          if (result !== "true") {
+            const errorCode = API.LMSGetLastError();
+            const errorString = API.LMSGetErrorString(errorCode);
+            console.error(
+              `SCORM Finish failed: Error ${errorCode} - ${errorString}`
+            );
+            return `SCORM Finish failed: Error ${errorCode} - ${errorString}`;
+          } else {
+            console.log("SCORM Finished");
+          }
+        } else {
+          return (
+            "SCORM API not available. Time spent: " + calculateSessionTime()
+          );
+        }
+      }
+
+      initializeSCORM();
+
+      // document.getElementById("close-btn").addEventListener("click", async () => {
+      //   const result = await finishSCORM();
+      //   // alert("Session closed.\n" + (result || "SCORM finished."));
+      //   // window.close();
+      // });
+
+
+    </script>
+  </body>
 </html>
