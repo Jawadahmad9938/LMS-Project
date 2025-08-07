@@ -22,8 +22,7 @@
       flex-direction: column;
       overflow: hidden;
     }
-    
-    /* Header - Slimmer */
+
     .app-header {
       background: linear-gradient(to right, #ff8a00, #e52e71);
       color: white;
@@ -200,8 +199,7 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.3);
     }
     
-    /* Enhanced Media Queries for Tablets and Other Screens */
-    @media (max-width: 576px) { /* Mobile (up to 576px) */
+    @media (max-width: 576px) {
       .app-header h1 {
         font-size: 1.2rem;
       }
@@ -241,7 +239,7 @@
       }
     }
 
-    @media (min-width: 577px) and (max-width: 768px) { /* Small Tablets (577px-768px) */
+    @media (min-width: 577px) and (max-width: 768px) { 
       .app-header h1 {
         font-size: 1.3rem;
       }
@@ -273,7 +271,7 @@
       }
     }
 
-    @media (min-width: 769px) and (max-width: 1024px) { /* Tablets (769px-1024px) */
+    @media (min-width: 769px) and (max-width: 1024px) {
       .app-header h1 {
         font-size: 1.4rem;
       }
@@ -305,7 +303,7 @@
       }
     }
 
-    @media (min-width: 1025px) { /* Desktops and larger screens */
+    @media (min-width: 1025px) { 
       .app-header h1 {
         font-size: 1.5rem;
       }
@@ -330,27 +328,25 @@
   </style>
 </head>
 <body>
-  <!-- Welcome Screen -->
+
   <div class="welcome-screen" id="welcomeScreen">
     <h1>Welcome to Learning Fun!</h1>
     <p>Enjoy our interactive games with maximum play area and easy side navigation!</p>
     <button class="start-button" id="startButton">Start Playing</button>
   </div>
 
-  <!-- Main App Layout -->
   <div id="appContainer" style="display: none;">
     <header class="app-header">
       <h1>Alphabet Matching Game</h1>
     </header>
     
     <div class="main-content">
-      <!-- Left Navigation -->
+
       <div class="nav-panel left-panel">
         <button class="nav-button" id="prevBtn" disabled>Previous</button>
         <button class="nav-button" id="teacherBtn">Teacher</button>
       </div>
-      
-      <!-- Center Game Area (Maximized) -->
+
       <div class="game-center">
         <div class="game-instructions" id="instructions">
           Drag and drop the letters to the correct boxes.
@@ -364,8 +360,7 @@
           Playing: <span id="currentGameTitle">Alphabet Matching Game</span>
         </div>
       </div>
-      
-      <!-- Right Navigation -->
+
       <div class="nav-panel right-panel">
         <button class="nav-button" id="nextBtn">Next</button>
       </div>
@@ -377,7 +372,7 @@
   </div>
 
   <script>
-    // Game data
+
     const defaultData = {
       "gameList": [
         { "id": "game1", "title": "Alphabet Matching Game", "instructions": "Drag and drop the letters to the correct boxes." },
@@ -394,14 +389,12 @@
     let currentIndex = 0;
     let scormAPI = null;
 
-    // Initialize app
     document.getElementById('startButton').addEventListener('click', () => {
       document.getElementById('welcomeScreen').style.display = 'none';
       document.getElementById('appContainer').style.display = 'block';
       loadGame(currentIndex);
     });
 
-    // Game navigation
     document.getElementById('prevBtn').addEventListener('click', () => {
       if (currentIndex > 0) {
         currentIndex--;
@@ -420,7 +413,6 @@
       window.location.href = 'input.html';
     });
 
-    // Load game function
     function loadGame(index) {
       const game = inputData.gameList[index];
       if (!game) return;
@@ -431,12 +423,10 @@
       
       const gameUrl = `games/game${index + 1}/index.html`;
       document.getElementById('gameFrame').src = gameUrl;
-      
-      // Update button states
+
       document.getElementById('prevBtn').disabled = index === 0;
       document.getElementById('nextBtn').disabled = index === inputData.gameList.length - 1;
-      
-      // SCORM integration
+
       if (scormAPI) {
         scormAPI.set('cmi.core.lesson_status', 'incomplete');
         scormAPI.set('cmi.core.score.raw', '0');
@@ -444,7 +434,6 @@
       }
     }
 
-    // Game completion handler
     function completeGame(score = 100) {
       if (scormAPI) {
         scormAPI.set('cmi.core.lesson_status', 'completed');
@@ -457,14 +446,12 @@
       }
     }
 
-    // Listen for game completion messages
     window.addEventListener('message', (event) => {
       if (event.data.type === 'gameComplete') {
         completeGame(event.data.score || 100);
       }
     });
 
-    // Clean up on exit
     window.addEventListener('beforeunload', () => {
       if (scormAPI) {
         scormAPI.set('cmi.core.lesson_status', 'completed');
