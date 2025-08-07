@@ -7,7 +7,6 @@
   <script src="https://cdn.jsdelivr.net/npm/scorm-api-wrapper@0.0.5/src/SCORMapi1_2.js"></script>
   <script src="../../nikud.js"></script>
   <style>
-    
     * { 
       box-sizing: border-box; 
       margin: 0; 
@@ -201,50 +200,131 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.3);
     }
     
-    @media (max-width: 768px) {
-      .main-content {
-        flex-direction: column;
+    /* Enhanced Media Queries for Tablets and Other Screens */
+    @media (max-width: 576px) { /* Mobile (up to 576px) */
+      .app-header h1 {
+        font-size: 1.2rem;
       }
-      
       .nav-panel {
         width: 100%;
         flex-direction: row;
         justify-content: space-around;
         padding: 5px;
       }
-      
       .nav-button {
         width: auto;
         padding: 8px 15px;
         margin: 0 5px;
         writing-mode: horizontal-tb;
         height: auto;
+        font-size: 0.8rem;
       }
-      
       .game-center {
         padding: 5px;
       }
-      
       .game-instructions {
         font-size: 0.9rem;
       }
-      
       .welcome-screen h1 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
       }
-      
       .welcome-screen p {
         font-size: 1rem;
-        padding: 0 20px;
+        padding: 0 10px;
       }
-      
       .start-button {
-        padding: 12px 30px;
+        padding: 10px 25px;
         font-size: 1rem;
       }
-      
       #gameFrame {
         min-height: 300px;
+      }
+    }
+
+    @media (min-width: 577px) and (max-width: 768px) { /* Small Tablets (577px-768px) */
+      .app-header h1 {
+        font-size: 1.3rem;
+      }
+      .nav-panel {
+        width: 60px;
+      }
+      .nav-button {
+        padding: 10px 4px;
+        font-size: 0.85rem;
+        height: 80px;
+      }
+      .game-center {
+        padding: 8px;
+      }
+      .game-instructions {
+        font-size: 0.95rem;
+      }
+      .welcome-screen h1 {
+        font-size: 2rem;
+      }
+      .welcome-screen p {
+        font-size: 1.1rem;
+      }
+      .start-button {
+        padding: 12px 30px;
+      }
+      #gameFrame {
+        min-height: 400px;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) { /* Tablets (769px-1024px) */
+      .app-header h1 {
+        font-size: 1.4rem;
+      }
+      .nav-panel {
+        width: 70px;
+      }
+      .nav-button {
+        padding: 11px 5px;
+        font-size: 0.9rem;
+        height: 90px;
+      }
+      .game-center {
+        padding: 10px;
+      }
+      .game-instructions {
+        font-size: 1rem;
+      }
+      .welcome-screen h1 {
+        font-size: 2.2rem;
+      }
+      .welcome-screen p {
+        font-size: 1.15rem;
+      }
+      .start-button {
+        padding: 14px 35px;
+      }
+      #gameFrame {
+        min-height: 450px;
+      }
+    }
+
+    @media (min-width: 1025px) { /* Desktops and larger screens */
+      .app-header h1 {
+        font-size: 1.5rem;
+      }
+      .nav-panel {
+        width: 80px;
+      }
+      .nav-button {
+        padding: 12px 5px;
+        font-size: 0.9rem;
+        height: 100px;
+      }
+      .game-center {
+        padding: 10px;
+      }
+      .game-instructions {
+        font-size: 1rem;
+      }
+      #gameFrame {
+        min-height: 500px;
       }
     }
   </style>
