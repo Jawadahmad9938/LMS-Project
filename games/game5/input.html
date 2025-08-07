@@ -1,0 +1,1017 @@
+just remove time overlay button and its function
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teacher Flip Card Manager</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #d0e2f1;
+        padding: 20px;
+        text-align: center;
+        color: #333;
+      }
+
+      .flowchart {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .section {
+        width: 100%;
+        margin: 10px 0;
+        padding: 15px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .upload-box,
+      .select-box {
+        display: inline-block;
+        padding: 10px 15px;
+        margin: 5px;
+        background-color: #1e90ff;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.3s;
+      }
+
+      .upload-box:hover,
+      .select-box:hover {
+        background-color: #0056b3;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      .stage-btn {
+        text-align: start;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        cursor: pointer;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin: 5px 0;
+      }
+
+      .stage-btn:hover {
+        background-color: #f8f9fa;
+      }
+
+      .preview-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .image-preview {
+        width: 90px;
+        height: 90px;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .upload-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      select,
+      input[type="checkbox"],
+      input[type="number"] {
+        padding: 5px;
+        margin: 5px;
+        font-size: 14px;
+        border-radius: 4px;
+      }
+
+      input[type="text"] {
+        padding: 5px;
+        margin: 5px;
+        font-size: 14px;
+        border-radius: 4px;
+        width: 90%;
+      }
+
+      .generate,
+      .add-stage-btn {
+        padding: 10px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin: 10px;
+      }
+
+      .generate:hover,
+      .add-stage-btn:hover {
+        background-color: #218838;
+      }
+
+      .counter {
+        font-weight: bold;
+        color: #ff5722;
+      }
+
+      .disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .stage-indicator {
+        font-weight: bold;
+        margin: 10px 0;
+        padding: 5px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        font-size: 18px;
+      }
+
+      .upload-container {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .svg-arrow {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        fill: #666666;
+      }
+
+      .upload p {
+        margin: 5px 0;
+        font-size: 16px;
+      }
+
+      .audio-preview {
+        margin-top: 10px;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 34px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background-color: #1e90ff;
+      }
+
+      input:focus + .slider {
+        box-shadow: 0 0 1px #1e90ff;
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+
+      .timer-inputs {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="flowchart">
+      <div class="section">
+        <label class="select-box"
+          >Grid Size:
+          <select id="gridSize" onchange="updateCounters()">
+            <option value="3x3">3x3 (4 pairs)</option>
+            <option value="4x4">4x4 (8 pairs)</option>
+            <option value="5x5">5x5 (12 pairs)</option>
+          </select>
+        </label>
+        <label class="select-box"
+          >Pair Type:
+          <select id="pairType" onchange="toggleSecondPair()">
+            <option value="same">Same Pairs</option>
+            <option value="different">Different Pairs</option>
+          </select>
+        </label>
+        <div
+          style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+          "
+        >
+          <div>
+            <input
+              type="file"
+              id="backImage"
+              accept="image/*"
+              onchange="previewBackground(event)"
+            />
+            <label for="backImage" class="upload-box">Upload Back Image</label>
+          </div>
+          <div>
+            <input
+              type="file"
+              id="wrongSound"
+              accept="audio/*"
+              onchange="previewWrongSound(event)"
+            />
+            <label for="wrongSound" class="upload-box"
+              >Upload Wrong Sound</label
+            >
+          </div>
+          <!-- <div>
+          <input type="file" id="timeUpOverlay" accept="image/*,audio/*" onchange="previewTimeUpOverlay(event)">
+          <label for="timeUpOverlay" class="upload-box">Upload Time-Up Overlay</label>
+        </div> -->
+        </div>
+        <div
+          style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+          "
+        >
+          <label class="switch">
+            <input type="checkbox" id="csSame" checked onchange="toggleCS()" />
+            <span class="slider round"></span>
+          </label>
+          <input
+            type="file"
+            id="correctSound"
+            accept="audio/*"
+            disabled
+            onchange="previewCorrectSound(event)"
+          />
+          <label for="correctSound" class="upload-box"
+            >Upload CS Same For All</label
+          >
+        </div>
+        <div id="counters">
+          Selected: <span id="totalCounter" class="counter">0</span> / Required:
+          <span id="requiredCounter" class="counter">0</span>
+        </div>
+      </div>
+
+      <div class="section" id="stagesSection">
+        <div class="stage-indicator" id="currentStage">P1</div>
+        <div id="stagesContainer">
+          <div class="stage-btn" onclick="moveToStage('P1')" id="stage-P1">
+            P#1
+            <div class="upload-container">
+              <div class="upload" id="upload-P1-1">
+                <input
+                  type="file"
+                  id="image-upload-P1-1"
+                  accept="image/*"
+                  onchange="previewImage(event, 'P1-1')"
+                />
+                <input
+                  type="file"
+                  id="audio-upload-P1-1"
+                  accept="audio/*"
+                  onchange="previewAudio(event, 'P1-1')"
+                />
+                <input
+                  type="file"
+                  id="correct-audio-P1"
+                  accept="audio/*"
+                  onchange="previewCorrectAudio(event, 'P1')"
+                  class="correct-audio"
+                  disabled
+                />
+                <div class="preview-container">
+                  <div class="image-preview" id="image-preview-P1-1">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      height="24px"
+                      viewBox="0 -960 960 960"
+                      width="24px"
+                      fill="#666666"
+                    >
+                      <path
+                        d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="upload-buttons">
+                    <div style="display: flex; align-items: center; gap: 10px">
+                      <svg
+                        class="svg-arrow"
+                        onclick="document.getElementById('image-upload-P1-1').click()"
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="24px"
+                        viewBox="0 -960 960 960"
+                        width="24px"
+                        fill="#666666"
+                      >
+                        <path
+                          d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
+                        />
+                      </svg>
+                      <p>Image</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px">
+                      <svg
+                        class="svg-arrow"
+                        onclick="document.getElementById('audio-upload-P1-1').click()"
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="24px"
+                        viewBox="0 -960 960 960"
+                        width="24px"
+                        fill="#666666"
+                      >
+                        <path
+                          d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
+                        />
+                      </svg>
+                      <p>Audio</p>
+                    </div>
+                    <div
+                      style="display: flex; align-items: center; gap: 10px"
+                      class="correct-audio-container"
+                    >
+                      <svg
+                        class="svg-arrow"
+                        onclick="document.getElementById('correct-audio-P1').click()"
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="24px"
+                        viewBox="0 -960 960 960"
+                        width="24px"
+                        fill="#666666"
+                      >
+                        <path
+                          d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
+                        />
+                      </svg>
+                      <p>Correct Audio</p>
+                    </div>
+                  </div>
+                  <div class="audio-preview" id="audio-preview-P1-1">
+                    <p>No Audio Selected</p>
+                  </div>
+                  <div class="audio-preview" id="correct-audio-preview-P1">
+                    <p>No Correct Audio Selected</p>
+                  </div>
+                </div>
+              </div>
+              <div class="upload" id="upload-P1-2" style="display: none">
+                <input
+                  type="file"
+                  id="image-upload-P1-2"
+                  accept="image/*"
+                  onchange="previewImage(event, 'P1-2')"
+                />
+                <input
+                  type="file"
+                  id="audio-upload-P1-2"
+                  accept="audio/*"
+                  onchange="previewAudio(event, 'P1-2')"
+                />
+                <div class="preview-container">
+                  <div class="image-preview" id="image-preview-P1-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      height="24px"
+                      viewBox="0 -960 960 960"
+                      width="24px"
+                      fill="#666666"
+                    >
+                      <path
+                        d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q- Vimeo-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="upload-buttons">
+                    <div style="display: flex; align-items: center; gap: 10px">
+                      <svg
+                        class="svg-arrow"
+                        onclick="document.getElementById('image-upload-P1-2').click()"
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="24px"
+                        viewBox="0 -960 960 960"
+                        width="24px"
+                        fill="#666666"
+                      >
+                        <path
+                          d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
+                        />
+                      </svg>
+                      <p>Image</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px">
+                      <svg
+                        class="svg-arrow"
+                        onclick="document.getElementById('audio-upload-P1-2').click()"
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="24px"
+                        viewBox="0 -960 960 960"
+                        width="24px"
+                        fill="#666666"
+                      >
+                        <path
+                          d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
+                        />
+                      </svg>
+                      <p>Audio</p>
+                    </div>
+                  </div>
+                  <div class="audio-preview" id="audio-preview-P1-2">
+                    <p>No Audio Selected</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="add-stage-btn" onclick="addStage()">
+          Add More Field
+        </button>
+      </div>
+
+      <div class="section" style="display: flex; flex-direction: column">
+        <label
+          ><input type="checkbox" id="timer" onchange="toggleTimer()" /> Enable
+          Timer</label
+        >
+        <div class="timer-inputs" id="timerInputs" style="display: none">
+          <label
+            >Minutes: <input type="number" id="timerMinutes" min="0" value="0"
+          /></label>
+          <label
+            >Seconds:
+            <input type="number" id="timerSeconds" min="0" max="59" value="0"
+          /></label>
+        </div>
+        <select id="replayOption" disabled>
+          <option value="shuffle">Redo Shuffle</option>
+          <option value="noShuffle">Redo No Shuffle</option>
+        </select>
+        <input type="text" id="projectName" placeholder="Enter project name" />
+        <button class="generate" onclick="saveProject()">Save</button>
+      </div>
+    </div>
+
+    <script>
+      const elements = {
+        gridSize: document.getElementById("gridSize"),
+        pairType: document.getElementById("pairType"),
+        csSame: document.getElementById("csSame"),
+        correctSound: document.getElementById("correctSound"),
+        timer: document.getElementById("timer"),
+        timerInputs: document.getElementById("timerInputs"),
+        timerMinutes: document.getElementById("timerMinutes"),
+        timerSeconds: document.getElementById("timerSeconds"),
+        replayOption: document.getElementById("replayOption"),
+        currentStage: document.getElementById("currentStage"),
+        stagesSection: document.getElementById("stagesSection"),
+        stagesContainer: document.getElementById("stagesContainer"),
+        projectName: document.getElementById("projectName"),
+        backImage: document.getElementById("backImage"),
+        wrongSound: document.getElementById("wrongSound"),
+        timeUpOverlay: document.getElementById("timeUpOverlay"),
+        totalCounter: document.getElementById("totalCounter"),
+        requiredCounter: document.getElementById("requiredCounter"),
+      };
+
+      let uploads = {},
+        stageCount = 1,
+        currentStageValue = "P1";
+      let backImagePath = "",
+        wrongSoundPath = "",
+        correctSoundPath = "",
+        timeUpOverlayPath = "";
+
+      function toggleCS() {
+        elements.correctSound.disabled = elements.csSame.checked;
+        const correctAudios = document.getElementsByClassName("correct-audio");
+        const correctAudioContainers = document.getElementsByClassName(
+          "correct-audio-container"
+        );
+        for (let i = 0; i < correctAudios.length; i++) {
+          correctAudios[i].disabled = elements.csSame.checked;
+          correctAudioContainers[i].style.display = elements.csSame.checked
+            ? "none"
+            : "flex";
+          if (elements.csSame.checked) {
+            correctAudios[i].value = "";
+            document.getElementById(
+              `correct-audio-preview-P${i + 1}`
+            ).innerHTML = "<p>No Correct Audio Selected</p>";
+          }
+        }
+        updateCounters();
+      }
+
+      function toggleTimer() {
+        elements.replayOption.disabled = !elements.timer.checked;
+        elements.timerInputs.style.display = elements.timer.checked
+          ? "flex"
+          : "none";
+        if (!elements.timer.checked) {
+          elements.timerMinutes.value = "0";
+          elements.timerSeconds.value = "0";
+        }
+      }
+
+      function toggleSecondPair() {
+        const pairType = elements.pairType.value;
+        const stageDivs =
+          elements.stagesContainer.getElementsByClassName("stage-btn");
+        for (let div of stageDivs) {
+          const uploads = div.getElementsByClassName("upload");
+          uploads[1].style.display =
+            pairType === "different" ? "block" : "none";
+        }
+        updateCounters();
+      }
+
+      function moveToStage(stageId) {
+        currentStageValue = stageId;
+        elements.currentStage.textContent = stageId;
+        toggleSecondPair();
+      }
+
+      function generateStages() {
+        const size = elements.gridSize.value;
+        const maxStages =
+          size === "2x6" ? 3 : size === "3x3" ? 4 : size === "4x4" ? 8 : 12;
+        stageCount = 0;
+        elements.stagesContainer.innerHTML = ""; // Clear existing stages
+        uploads = {}; // Reset uploads
+
+        for (let i = 1; i <= maxStages; i++) {
+          stageCount++;
+          const stageId = `P${stageCount}`;
+          const stageDiv = document.createElement("div");
+          stageDiv.className = "stage-btn";
+          stageDiv.id = `stage-${stageId}`;
+          stageDiv.onclick = () => moveToStage(stageId);
+          stageDiv.innerHTML = `
+      P#${stageCount}
+      <div class="upload-container">
+        <div class="upload" id="upload-${stageId}-1">
+          <input type="file" id="image-upload-${stageId}-1" accept="image/*" onchange="previewImage(event, '${stageId}-1')">
+          <input type="file" id="audio-upload-${stageId}-1" accept="audio/*" onchange="previewAudio(event, '${stageId}-1')">
+          <input type="file" id="correct-audio-${stageId}" accept="audio/*" onchange="previewCorrectAudio(event, '${stageId}')" class="correct-audio" disabled>
+          <div class="preview-container">
+            <div class="image-preview" id="image-preview-${stageId}-1">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666">
+                <path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
+              </svg>
+            </div>
+            <div class="upload-buttons">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <svg class="svg-arrow" onclick="document.getElementById('image-upload-${stageId}-1').click()" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666">
+                  <path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
+                </svg>
+                <p>Image</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <svg class="svg-arrow" onclick="document.getElementById('audio-upload-${stageId}-1').click()" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666">
+                  <path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
+                </svg>
+                <p>Audio</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;" class="correct-audio-container">
+                <svg class="svg-arrow" onclick="document.getElementById('correct-audio-${stageId}').click()" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666">
+                  <path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
+                </svg>
+                <p>Correct Audio</p>
+              </div>
+            </div>
+            <div class="audio-preview" id="audio-preview-${stageId}-1"><p>No Audio Selected</p></div>
+            <div class="audio-preview" id="correct-audio-preview-${stageId}"><p>No Correct Audio Selected</p></div>
+          </div>
+        </div>
+        <div class="upload" id="upload-${stageId}-2" style="display: none;">
+          <input type="file" id="image-upload-${stageId}-2" accept="image/*" onchange="previewImage(event, '${stageId}-2')">
+          <input type="file" id="audio-upload-${stageId}-2" accept="audio/*" onchange="previewAudio(event, '${stageId}-2')">
+          <div class="preview-container">
+            <div class="image-preview" id="image-preview-${stageId}-2">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666">
+                <path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
+              </svg>
+            </div>
+            <div class="upload-buttons">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <svg class="svg-arrow" onclick="document.getElementById('image-upload-${stageId}-2').click()" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666">
+                  <path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
+                </svg>
+                <p>Image</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <svg class="svg-arrow" onclick="document.getElementById('audio-upload-${stageId}-2').click()" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666">
+                  <path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
+                </svg>
+                <p>Audio</p>
+              </div>
+            </div>
+            <div class="audio-preview" id="audio-preview-${stageId}-2"><p>No Audio Selected</p></div>
+          </div>
+        </div>
+      </div>
+    `;
+          elements.stagesContainer.appendChild(stageDiv);
+        }
+        moveToStage("P1");
+        toggleSecondPair();
+        toggleCS();
+        updateCounters();
+      }
+
+      function previewImage(event, id) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            document.getElementById(
+              `image-preview-${id}`
+            ).innerHTML = `<img src="${e.target.result}" alt="${file.name}">`;
+          };
+          reader.readAsDataURL(file);
+          uploads[id] = { ...uploads[id], image: file.name };
+          updateCounters();
+        }
+      }
+
+      function previewAudio(event, id) {
+        const file = event.target.files[0];
+        if (file) {
+          document.getElementById(
+            `audio-preview-${id}`
+          ).innerHTML = `<audio controls><source src="${URL.createObjectURL(
+            file
+          )}" type="${file.type}">No Audio Support</audio>`;
+          uploads[id] = { ...uploads[id], audio: file.name };
+          updateCounters();
+        }
+      }
+
+      function previewCorrectAudio(event, id) {
+        const file = event.target.files[0];
+        if (file) {
+          document.getElementById(
+            `correct-audio-preview-${id}`
+          ).innerHTML = `<audio controls><source src="${URL.createObjectURL(
+            file
+          )}" type="${file.type}">No Audio Support</audio>`;
+          uploads[id] = { ...uploads[id], correctAudio: file.name };
+          updateCounters();
+        }
+      }
+
+      function previewBackground(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            backImagePath = file.name;
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      function previewWrongSound(event) {
+        const file = event.target.files[0];
+        if (file) {
+          wrongSoundPath = file.name;
+        }
+      }
+
+      function previewCorrectSound(event) {
+        const file = event.target.files[0];
+        if (file) {
+          correctSoundPath = file.name;
+        }
+      }
+
+      function previewTimeUpOverlay(event) {
+        const file = event.target.files[0];
+        if (file) {
+          timeUpOverlayPath = file.name;
+        }
+      }
+
+      function updateCounters() {
+        const size = elements.gridSize.value;
+        const requiredPairs =
+          size === "2x6" ? 3 : size === "3x3" ? 4 : size === "4x4" ? 8 : 12;
+        const pairType = elements.pairType.value;
+        let totalPairs = 0;
+        for (let i = 1; i <= stageCount; i++) {
+          const stageId = `P${i}`;
+          const first = uploads[`${stageId}-1`] || {};
+          const second = uploads[`${stageId}-2`] || {};
+          if (pairType === "same") {
+            if (first.image || first.audio) totalPairs++;
+          } else {
+            if ((first.image || first.audio) && (second.image || second.audio))
+              totalPairs++;
+          }
+        }
+        elements.totalCounter.textContent = totalPairs;
+        elements.requiredCounter.textContent = requiredPairs;
+        document.querySelector(".add-stage-btn").style.display = "none"; // Hide add stage button
+      }
+
+      function saveProject() {
+        const projectName = elements.projectName.value;
+        const size = elements.gridSize.value;
+        const requiredPairs =
+          size === "2x6" ? 3 : size === "3x3" ? 4 : size === "4x4" ? 8 : 12;
+        const pairType = elements.pairType.value;
+        let totalPairs = 0;
+        const stages = {};
+
+        for (let i = 1; i <= stageCount; i++) {
+          const stageId = `P${i}`;
+          const first = uploads[`${stageId}-1`] || {};
+          const second = uploads[`${stageId}-2`] || {};
+          if (pairType === "same") {
+            if (first.image || first.audio) {
+              stages[stageId] = {
+                first,
+                second: first,
+                correctAudio: uploads[stageId]?.correctAudio || "",
+              };
+              totalPairs++;
+            }
+          } else {
+            if (
+              (first.image || first.audio) &&
+              (second.image || second.audio)
+            ) {
+              stages[stageId] = {
+                first,
+                second,
+                correctAudio: uploads[stageId]?.correctAudio || "",
+              };
+              totalPairs++;
+            }
+          }
+        }
+
+        if (!projectName) {
+          alert("Please enter a project name.");
+          return;
+        }
+        if (totalPairs < requiredPairs) {
+          alert(`Please upload content for all ${requiredPairs} pairs.`);
+          return;
+        }
+        if (!backImagePath) backImagePath = "white";
+        if (!wrongSoundPath) wrongSoundPath = "quiet";
+
+        if (elements.csSame.checked && !correctSoundPath) {
+          alert("Please upload a correct sound for all pairs.");
+          return;
+        }
+        if (!elements.csSame.checked) {
+          for (let i = 1; i <= stageCount; i++) {
+            const stageId = `P${i}`;
+            if (stages[stageId] && !stages[stageId].correctAudio) {
+              alert(`Please upload a correct sound for pair ${stageId}.`);
+              return;
+            }
+          }
+        }
+
+        let timerDuration = 0;
+        if (elements.timer.checked) {
+          const minutes = parseInt(elements.timerMinutes.value) || 0;
+          const seconds = parseInt(elements.timerSeconds.value) || 0;
+          if (minutes < 0 || seconds < 0 || seconds > 59) {
+            alert(
+              "Please enter valid timer values (minutes >= 0, seconds 0-59)."
+            );
+            return;
+          }
+          if (minutes === 0 && seconds === 0) {
+            alert("Timer duration cannot be zero.");
+            return;
+          }
+          timerDuration = minutes * 60 + seconds;
+        }
+
+        const data = {
+          projectName,
+          gridSize: size,
+          pairType,
+          backImage: backImagePath,
+          wrongSound: wrongSoundPath,
+          correctSound: elements.csSame.checked ? correctSoundPath : "",
+          timer: elements.timer.checked,
+          timerDuration,
+          replayOption: elements.timer.checked
+            ? elements.replayOption.value
+            : "",
+          timeUpOverlay: timeUpOverlayPath || "none",
+          stages,
+          hiddenCards: size === "3x3" ? 1 : size === "5x5" ? 1 : 0, // Handle hidden cards for 3x3 and 5x5
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${projectName}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert(`Project saved as ${projectName}.json`);
+      }
+
+      // Initialize
+      elements.gridSize.innerHTML = `
+  <option value="2x6">2x6 (3 pairs)</option>
+  <option value="3x3">3x3 (4 pairs)</option>
+  <option value="4x4">4x4 (8 pairs)</option>
+  <option value="5x5">5x5 (12 pairs)</option>
+`;
+      elements.gridSize.addEventListener("change", generateStages);
+      generateStages();
+      toggleCS();
+      toggleTimer();
+      moveToStage("P1");
+      updateCounters();
+
+
+
+      //  Upload Tracking Setup 
+      window.uploadedFiles = [];
+
+      function generateUniqueName() {
+        const dateTime = Date.now();
+        const random5Digit = Math.floor(10000 + Math.random() * 90000);
+        return `${dateTime}${random5Digit}`;
+      }
+
+      function handleUpload(input, dataName) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const fileNameParts = file.name.split(".");
+        const fileExtension = fileNameParts.pop();
+        const originalName = fileNameParts.join(".");
+        const uniqueName = generateUniqueName() + "." + fileExtension;
+
+        // Remove previous file with same dataName
+        window.uploadedFiles = window.uploadedFiles.filter(
+          (f) => f.dataName !== dataName
+        );
+
+        window.uploadedFiles.push({
+          dataName,
+          originalName,
+          fileExtension,
+          fileName: uniqueName,
+          file,
+        });
+
+        return uniqueName;
+      }
+
+      //  Modify previews to use handleUpload 
+      function previewImage(event, id) {
+        const fileName = handleUpload(event.target, `stage-${id}-image`);
+        if (!fileName) return;
+
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById(
+            `image-preview-${id}`
+          ).innerHTML = `<img src="${e.target.result}" alt="${file.name}">`;
+        };
+        reader.readAsDataURL(file);
+
+        uploads[id] = { ...uploads[id], image: fileName };
+        updateCounters();
+      }
+
+      function previewAudio(event, id) {
+        const fileName = handleUpload(event.target, `stage-${id}-audio`);
+        if (!fileName) return;
+
+        const file = event.target.files[0];
+        document.getElementById(
+          `audio-preview-${id}`
+        ).innerHTML = `<audio controls><source src="${URL.createObjectURL(
+          file
+        )}" type="${file.type}">No Audio Support</audio>`;
+
+        uploads[id] = { ...uploads[id], audio: fileName };
+        updateCounters();
+      }
+
+      function previewCorrectAudio(event, id) {
+        const fileName = handleUpload(
+          event.target,
+          `stage-${id}-correct-audio`
+        );
+        if (!fileName) return;
+
+        const file = event.target.files[0];
+        document.getElementById(
+          `correct-audio-preview-${id}`
+        ).innerHTML = `<audio controls><source src="${URL.createObjectURL(
+          file
+        )}" type="${file.type}">No Audio Support</audio>`;
+
+        uploads[id] = { ...uploads[id], correctAudio: fileName };
+        updateCounters();
+      }
+
+      function previewBackground(event) {
+        const fileName = handleUpload(event.target, "backgroundImage");
+        if (fileName) backImagePath = fileName;
+      }
+
+      function previewWrongSound(event) {
+        const fileName = handleUpload(event.target, "wrongSound");
+        if (fileName) wrongSoundPath = fileName;
+      }
+
+      function previewCorrectSound(event) {
+        const fileName = handleUpload(event.target, "correctSound");
+        if (fileName) correctSoundPath = fileName;
+      }
+
+      function previewTimeUpOverlay(event) {
+        const fileName = handleUpload(event.target, "timeUpOverlay");
+        if (fileName) timeUpOverlayPath = fileName;
+      }
+
+    </script>
+  </body>
+</html>

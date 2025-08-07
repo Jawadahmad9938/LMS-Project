@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Memory Card Quiz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #d0e2f1;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .grid {
+            display: grid;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+
+        .card {
+            width: 100px;
+            height: 100px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            position: relative;
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s ease;
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front,
+        .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-front {
+            transform: rotateY(180deg);
+            background: #f0f0f0;
+        }
+
+        .card-front img,
+        .card-back img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .card-back {
+            background: #1e90ff;
+        }
+
+        .card.matched {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .empty {
+            width: 100px;
+            height: 100px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .overlay img {
+            max-width: 80%;
+            max-height: 80%;
+            object-fit: contain;
+        }
+
+        .timer {
+            font-size: 18px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <h1 id="projectName">Memory Card Quiz</h1>
+        <div class="error-message" id="errorMessage" style="display: none;"></div>
+        <div class="timer" id="timerDisplay">Time: 00:00</div>
+        <div class="grid" id="gameGrid"></div>
+        <div class="overlay" id="timeUpOverlay">
+            <p>Time's Up!</p>
+            <div id="overlayContent"></div>
+        </div>
+    </div>
+    <script src="input.js"></script>
+
+    <script>
+        let gameData = null;
+        let cards = [];
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        let matchesFound = 0;
+        let timerInterval = null;
+        let timeRemaining = 0;
+        let clickLock = false;
+
+        // Default JSON configuration if input.js fails
+        const defaultGameData = {
+            projectName: "Default Memory Game",
+            gridSize: "4x4",
+            pairType: "same",
+            backImage: "white",
+            timer: true,
+            timerDuration: 60,
+            correctSound: "",
+            wrongSound: "",
+            timeUpOverlay: "none",
+            stages: {
+                stage1: {
+                    first: { image: "https://via.placeholder.com/100?text=Card1", audio: "" },
+                    second: { image: "https://via.placeholder.com/100?text=Card1", audio: "" },
+                    correctAudio: ""
+                },
+                stage2: {
+                    first: { image: "https://via.placeholder.com/100?text=Card2", audio: "" },
+                    second: { image: "https://via.placeholder.com/100?text=Card2", audio: "" },
+                    correctAudio: ""
+                },
+                stage3: {
+                    first: { image: "https://via.placeholder.com/100?text=Card3", audio: "" },
+                    second: { image: "https://via.placeholder.com/100?text=Card3", audio: "" },
+                    correctAudio: ""
+                },
+                stage4: {
+                    first: { image: "https://via.placeholder.com/100?text=Card4", audio: "" },
+                    second: { image: "https://via.placeholder.com/100?text=Card4", audio: "" },
+                    correctAudio: ""
+                }
+            }
+        };
+
+        window.onload = function () {
+            try {
+              if (typeof inputData !== 'undefined') {
+                gameData = inputData;
+                document.getElementById('errorMessage').style.display = 'none';
+              } else {
+                throw new Error('inputData not defined');
+              }
+            } catch (error) {
+              console.error('Error loading inputData:', error);
+              document.getElementById('errorMessage').textContent = 'Failed to load inputData. Using default configuration.';
+              document.getElementById('errorMessage').style.display = 'block';
+              gameData = defaultGameData;
+            }
+          
+            initializeGame();
+            startGamePreview();
+          };
+          
+
+        function startGamePreview() {
+            cards.forEach(card => {
+                if (!card.classList.contains('empty')) {
+                    card.classList.add('flipped');
+                }
+            });
+            setTimeout(() => {
+                cards.forEach(card => {
+                    if (!card.classList.contains('empty') && !card.classList.contains('matched')) {
+                        card.classList.remove('flipped');
+                    }
+                });
+            }, 3000);
+        }
+
+        function initializeGame() {
+            if (!gameData) return;
+            // Clear existing timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            document.getElementById('projectName').textContent = gameData.projectName;
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+            cards = [];
+            matchesFound = 0;
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+            clickLock = false;
+
+            // Set grid dimensions
+            let rows, cols, totalCards, hiddenIndex;
+            switch (gameData.gridSize) {
+                case '2x6':
+                    rows = 2;
+                    cols = 6;
+                    totalCards = 6;
+                    hiddenIndex = -1;
+                    break;
+                case '3x3':
+                    rows = 3;
+                    cols = 3;
+                    totalCards = 9;
+                    hiddenIndex = 4;
+                    break;
+                case '4x4':
+                    rows = 4;
+                    cols = 4;
+                    totalCards = 16;
+                    hiddenIndex = -1;
+                    break;
+                case '5x5':
+                    rows = 5;
+                    cols = 5;
+                    totalCards = 25;
+                    hiddenIndex = 12;
+                    break;
+                default:
+                    console.error('Invalid grid size:', gameData.gridSize);
+                    gameData = defaultGameData; // Fallback to default if gridSize is invalid
+                    rows = 4;
+                    cols = 4;
+                    totalCards = 16;
+                    hiddenIndex = -1;
+                    break;
+            }
+            grid.style.gridTemplateColumns = `repeat(${cols}, 100px)`;
+
+            // Create card data
+            const cardData = [];
+            Object.keys(gameData.stages).forEach(stageId => {
+                const stage = gameData.stages[stageId];
+                cardData.push({
+                    id: `${stageId}-1`,
+                    image: stage.first.image || 'https://via.placeholder.com/100?text=No+Image',
+                    audio: stage.first.audio || '',
+                    correctAudio: gameData.correctSound || stage.correctAudio || ''
+                });
+                if (gameData.pairType === 'different') {
+                    cardData.push({
+                        id: `${stageId}-2`,
+                        image: stage.second.image || 'https://via.placeholder.com/100?text=No+Image',
+                        audio: stage.second.audio || '',
+                        correctAudio: gameData.correctSound || stage.correctAudio || ''
+                    });
+                } else {
+                    cardData.push({
+                        id: `${stageId}-1`,
+                        image: stage.first.image || 'https://via.placeholder.com/100?text=No+Image',
+                        audio: stage.first.audio || '',
+                        correctAudio: gameData.correctSound || stage.correctAudio || ''
+                    });
+                }
+            });
+
+            // Shuffle cards
+            shuffleArray(cardData);
+
+            // Create cards
+            let cardIndex = 0;
+            for (let i = 0; i < rows * cols; i++) {
+                if (i === hiddenIndex) {
+                    const emptySpace = document.createElement('div');
+                    emptySpace.className = 'empty';
+                    grid.appendChild(emptySpace);
+                    continue;
+                }
+                const cardInfo = cardData[cardIndex] || {};
+                cardIndex++;
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.id = cardInfo.id || '';
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <img src="${cardInfo.image}" alt="card" onerror="this.src='https://via.placeholder.com/100?text=Image+Error'">
+                        </div>
+                        <div class="card-back">
+                            ${gameData.backImage !== 'white' ? `<img src="${gameData.backImage}" alt="back" onerror="this.src='https://via.placeholder.com/100?text=Back+Error'">` : ''}
+                        </div>
+                    </div>
+                `;
+                if (cardInfo.id) {
+                    card.addEventListener('click', () => {
+                        if (!clickLock) {
+                            clickLock = true;
+                            flipCard(card, cardInfo);
+                            setTimeout(() => { clickLock = false; }, 100);
+                        }
+                    });
+                }
+                grid.appendChild(card);
+                cards.push(card);
+            }
+
+            // Start timer if enabled
+            if (gameData.timer) {
+                timeRemaining = gameData.timerDuration;
+                document.getElementById('timerDisplay').style.display = 'block';
+                updateTimerDisplay();
+                timerInterval = setInterval(() => {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                    if (timeRemaining <= 0) {
+                        endGame();
+                    }
+                }, 1000);
+            } else {
+                document.getElementById('timerDisplay').style.display = 'none';
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function flipCard(card, cardInfo) {
+            if (lockBoard || card === firstCard || card.classList.contains('matched') || card.classList.contains('empty')) return;
+            card.classList.add('flipped');
+            if (cardInfo.audio && cardInfo.audio !== 'quiet') {
+                const audio = new Audio(cardInfo.audio);
+                audio.play().catch(err => {
+                    console.error('Audio error:', err);
+                    document.getElementById('errorMessage').textContent = `Failed to play audio: ${cardInfo.audio}`;
+                    document.getElementById('errorMessage').style.display = 'block';
+                });
+            }
+
+            if (!firstCard) {
+                firstCard = { card, cardInfo };
+            } else {
+                secondCard = { card, cardInfo };
+                lockBoard = true;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const isMatch = firstCard.cardInfo.id === secondCard.cardInfo.id ||
+                (firstCard.cardInfo.id.split('-')[0] === secondCard.cardInfo.id.split('-')[0] &&
+                    gameData.pairType === 'different');
+            if (isMatch) {
+                firstCard.card.classList.add('matched');
+                secondCard.card.classList.add('matched');
+                matchesFound++;
+                if (firstCard.cardInfo.correctAudio && firstCard.cardInfo.correctAudio !== 'quiet') {
+                    const audio = new Audio(firstCard.cardInfo.correctAudio);
+                    audio.play().catch(err => {
+                        console.error('Audio error:', err);
+                        document.getElementById('errorMessage').textContent = `Failed to play correct audio: ${firstCard.cardInfo.correctAudio}`;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    });
+                }
+                const totalPairs = gameData.gridSize === '2x6' ? 3 : gameData.gridSize === '3x3' ? 4 : gameData.gridSize === '4x4' ? 8 : 12;
+                if (matchesFound === totalPairs) {
+                    setTimeout(() => {
+                        alert('You won!');
+                        resetAndStartGame();
+                    }, 500);
+                }
+                resetBoard();
+            } else {
+                if (gameData.wrongSound && gameData.wrongSound !== 'quiet') {
+                    const audio = new Audio(gameData.wrongSound);
+                    audio.play().catch(err => {
+                        console.error('Audio error:', err);
+                        document.getElementById('errorMessage').textContent = `Failed to play wrong sound: ${gameData.wrongSound}`;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    });
+                }
+                setTimeout(() => {
+                    firstCard.card.classList.remove('flipped');
+                    secondCard.card.classList.remove('flipped');
+                    resetBoard();
+                }, 1000);
+            }
+        }
+
+        function resetBoard() {
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timerDisplay').textContent = `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function endGame() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            const overlay = document.getElementById('timeUpOverlay');
+            const overlayContent = document.getElementById('overlayContent');
+            if (gameData.timeUpOverlay && gameData.timeUpOverlay !== 'none') {
+                if (gameData.timeUpOverlay.endsWith('.mp3') || gameData.timeUpOverlay.endsWith('.wav')) {
+                    const audio = new Audio(gameData.timeUpOverlay);
+                    audio.play().catch(err => {
+                        console.error('Audio error:', err);
+                        document.getElementById('errorMessage').textContent = `Failed to play time-up audio: ${gameData.timeUpOverlay}`;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    });
+                    overlayContent.innerHTML = '';
+                } else {
+                    overlayContent.innerHTML = `<img src="${gameData.timeUpOverlay}" alt="Time Up Overlay" onerror="this.src='https://via.placeholder.com/300?text=Overlay+Error'">`;
+                }
+            }
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                resetAndStartGame();
+            }, 3000);
+        }
+
+        function resetAndStartGame() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            initializeGame();
+            startGamePreview();
+        }
+    </script>
+</body>
+
+</html>
