@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hebrew Drag and Drop</title>
+    <style>
+      body {
+        font-family: "Times New Roman", Times, serif;
+        text-align: center;
+        padding: 20px;
+        font-weight: bold;
+        background: #fff;
+      }
+
+      .quiz-header {
+        text-align: center;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .drop-area {
+        width: 70px;
+        height: 70px;
+        margin: 20px auto 20px;
+        position: relative;
+        font-size: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9;
+      }
+
+      .reset-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 30px;
+        cursor: pointer;
+        transform: rotate(45deg);
+      }
+
+      .hebrew-row {
+        margin: 10px auto;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 30px;
+      }
+
+      .letter {
+        font-size: 40px;
+        cursor: grab;
+      }
+
+      .bottom-bar {
+        margin: 30px auto;
+        display: flex;
+        gap: 20px;
+        border: 1px solid #000;
+        padding: 10px;
+        width: fit-content;
+        min-width: 200px;
+        height: 70px;
+      }
+
+      svg {
+        width: 73px;
+        height: 89px;
+      }
+
+      #topImage {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      #bottomImages {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+      }
+
+      .font-family {
+        font-family: "Times New Roman", serif;
+      }
+
+      #start-page {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+
+      #start-button {
+        padding: 10px 20px;
+        font-size: 18px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+
+      #quiz-container {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        padding: 80px;
+      }
+
+      .droppedLetters {
+        cursor: default;
+      }
+
+      .droppedLetters.draggable {
+        cursor: grab;
+      }
+
+      .images {
+        display: flex;
+        gap: 30px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="start-page">
+      <h1>Hebrew Quiz Board</h1>
+      <p>Drag alphabet to match the target value!</p>
+      <button id="start-button">Start Quiz</button>
+    </div>
+
+    <div class="container" id="quiz-container">
+      <div
+        id="placementArea"
+        style="
+          height: 120px;
+          font-size: 200px;
+          display: flex;
+          margin: 0 auto;
+          width: fit-content;
+          position: relative;
+          gap: 70px;
+        "
+      >
+        <div
+          class="reset-btn"
+          style="
+            position: absolute;
+            top: 0;
+            right: 0;
+            cursor: pointer;
+            z-index: 10;
+            font-weight: bold;
+          "
+        ></div>
+      </div>
+      <div style="margin-top: -120px" class="images">
+        <div>
+          <img
+            style="margin-right: 200px; height: 160px"
+            src="image1.png"
+            alt="cover image"
+          />
+        </div>
+
+        <div>
+          <img
+            style="margin-left: 200px; height: 160px"
+            src="image2.png"
+            alt="cover image"
+          />
+        </div>
+      </div>
+
+      <div style="margin-top: 100px" class="hebrew-row" id="row1"></div>
+      <div class="hebrew-row" id="row2"></div>
+      <div class="hebrew-row" id="row3"></div>
+
+      <div class="bottom-bar" id="bottomBar"></div>
+    </div>
+    <script src="input.js"></script>
+    <script>
+      const lettersData = inputData.letters;
+      const inputLetters = lettersData.slice().reverse();
+      const quizAudio = inputData.qaudio;
+
+      const audioElement = new Audio(quizAudio);
+
+      for (let i = 0; i < inputLetters.length; i++) {
+        let html = "";
+        if (inputLetters[i].type == "fixed") {
+          html += '<div class="drop-area">';
+          html +=
+            '<div class="droppedLetters"><span style="font-size:200px; class="fixed-letter font-family">' +
+            inputLetters[i].value +
+            "</span></div>";
+        } else {
+          html += '<div class="drop-area doDropHere">';
+          html +=
+            '<div class="droppedLetters" draggable="false"><span style="font-size:200px;" class="variable-letter font-family"></span></div>';
+        }
+        html += "</div>";
+        document.getElementById("placementArea").innerHTML += html;
+      }
+
+      const letters = [
+        { char: "י", w: 50 },
+        { char: "ט", w: 71 },
+        { char: "ח", w: 69 },
+        { char: "ז", w: 51 },
+        { char: "ו", w: 49 },
+        { char: "ה", w: 70 },
+        { char: "ד", w: 65 },
+        { char: "ג", w: 56 },
+        { char: "ב", w: 65 },
+        { char: "בּ", w: 65 },
+        { char: "א", w: 65 },
+      ];
+      const letters2 = [
+        { char: "ק", w: 51 },
+        { char: "צ", w: 51 },
+        { char: "פ", w: 51 },
+        { char: "פּ", w: 51 },
+        { char: "ע", w: 51 },
+        { char: "ס", w: 51 },
+        { char: "נ", w: 51 },
+        { char: "מ", w: 72 },
+        { char: "ל", w: 62, h: 84 },
+        { char: "כ", w: 63 },
+        { char: "כּ", w: 63 },
+      ];
+      const letters3 = [
+        { char: "ת", w: 54 },
+        { char: "תּ", w: 54 },
+        { char: "שׂ", w: 54, simple: true },
+        { char: "שׁ", w: 54, simple: true },
+        { char: "ר", w: 51, h: 75 },
+      ];
+      // const hebrewNikuds = ["ָ", "ַ", "ֵ", "ֶ", "ִ", "ֹ", "ֻ", "ְ", "ֳ", "ֲ", "ֱ", "ּ"];
+      const hebrewNikuds = ["ָ", "ַ", "ֵ", "ֶ", "ִ", "ְ", "ּ"];
+
+      function createLetter({ char, w, h = 77, simple = false }, source) {
+        if (char == "שׂ" || char == "שׁ") {
+          const svg = simple
+            ? `<svg style="width: 92px;height: 102px;"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
+                <path d="M0,0L${w},0 ${w},${h} 0,${h}z" fill="#FFF" fill-opacity="0"/>
+                <text class="font-family" font-size="81" fill="#000" x="5" y="60">${char}</text>
+            </svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
+                <path d="M0,0L${w},0 ${w},${h} 0,${h}z" fill="#FFF" fill-opacity="0"/>
+                <text class="font-family" font-size="96" fill="#000" x="10" y="${
+                  h - 8
+                }">${char}</text>
+            </svg>`;
+          return `<div class="letter" draggable="true" data-source="${source}">${svg}</div>`;
+        } else {
+          const svg = simple
+            ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
+                 <path d="M0,0L${w},0 ${w},${h} 0,${h}z" fill="#FFF" fill-opacity="0"/>
+                 <text class="font-family" font-size="64" fill="#000" x="5" y="60">${char}</text>
+               </svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
+                 <path d="M0,0L${w},0 ${w},${h} 0,${h}Tz" fill="#FFF" fill-opacity="0"/>
+                 <text class="font-family" font-size="96" fill="#000" x="10" y="${
+                   h - 8
+                 }">${char}</text>
+               </svg>`;
+          return `<div class="letter" draggable="true" data-source="${source}">${svg}</div>`;
+        }
+      }
+
+      function createNikud(
+        id,
+        index,
+        textX = 10,
+        textY = 35,
+        pathX = 8,
+        pathY = 4
+      ) {
+        let html = `<div class="nikuds" draggable="true" data-type="image" data-id="${id}">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 73 89">`;
+
+        const finalTextX = index === 4 ? 19 : index === 6 ? -6 : textX;
+        const finalTextY = index === 4 ? 33 : index === 6 ? 40 : textY;
+
+        if (index !== 5) {
+          html += `<text class="font-family" font-size="96" fill="#000" x="${finalTextX}" y="${finalTextY}">${id}</text>`;
+        }
+
+        if ([0, 1, 2, 3].includes(index)) {
+          html += `<path d="M20.15,10A10.08,10.08,0,1,0,0,10A10.08,10.08,0,0,0,20.15,10Z"
+                 fill="#BFBFBF" stroke="#808080" stroke-width="1"
+                 transform="translate(9, 15)"/>`;
+        } else if (index === 4) {
+          html += `<path d="M20.15,10A10.08,10.08,0,1,0,0,10A10.08,10.08,0,0,0,20.15,10Z"
+                 fill="#BFBFBF" stroke="#808080" stroke-width="1"
+                 transform="translate(4, 15)"/>`;
+        } else if (index === 5) {
+          html += `<path d="M20.15,10A10.08,10.08,0,1,0,0,10A10.08,10.08,0,0,0,20.15,10Z"
+                 fill="#BFBFBF" stroke="#808080" stroke-width="1"
+                 transform="translate(20, 16)"/>
+                 <text class="font-family" font-size="96" fill="#000" x="15" y="38">${id}</text>`;
+        } else if (index === 6) {
+          html += `<path d="M20.15,10A10.08,10.08,0,1,0,0,10A10.08,10.08,0,0,0,20.15,10Z"
+                 fill="#BFBFBF" stroke="#808080" stroke-width="1"
+                 transform="translate(10, 20)"/>`;
+        }
+        html += `</svg></div>`;
+        return html;
+      }
+
+      document.getElementById("row1").innerHTML = letters
+        .map((l) => createLetter(l, "row1"))
+        .join("");
+      document.getElementById("row2").innerHTML = letters2
+        .map((l) => createLetter(l, "row2"))
+        .join("");
+      document.getElementById("row3").innerHTML = letters3
+        .map((l) => createLetter(l, "row3"))
+        .join("");
+      document.getElementById("bottomBar").innerHTML = hebrewNikuds
+        .map((id, i) => createNikud(id, i))
+        .join("");
+
+      const startPage = document.getElementById("start-page");
+      const quizContainer = document.getElementById("quiz-container");
+      const startButton = document.getElementById("start-button");
+      const dropAreas = document.querySelectorAll(".doDropHere");
+      const droppedLetters = document.querySelectorAll(".variable-letter");
+      const resetBtn = document.querySelector(".reset-btn");
+      const rowLetters = document.querySelectorAll(".hebrew-row");
+      const bottomBar = document.getElementById("bottomBar");
+
+      startPage.style.display = "flex";
+      quizContainer.style.display = "none";
+
+      function startQuiz() {
+        startPage.style.display = "none";
+        quizContainer.style.display = "flex";
+
+        audioElement.play().catch((error) => {
+          console.error("Error playing audio:", error);
+          alert("Audio playback failed. Please check the audio file path.");
+        });
+
+        if (typeof initializeSCORM === "function") {
+          initializeSCORM();
+        }
+
+        initQuiz();
+      }
+
+      function initQuiz() {
+        resetBoard();
+      }
+
+      function resetBoard() {
+        document.querySelectorAll(".variable-letter").forEach((span) => {
+          span.innerHTML = "";
+          span.parentElement.setAttribute("draggable", "false");
+          span.parentElement.classList.remove("draggable");
+        });
+      }
+
+      startButton.addEventListener("click", startQuiz);
+      resetBtn.addEventListener("click", resetBoard);
+
+      document.querySelectorAll(".letter").forEach((letter) => {
+        letter.addEventListener("dragstart", (e) => {
+          const type = "letter";
+          const char = letter.querySelector("text").textContent;
+          const data = JSON.stringify({ type, char });
+          e.dataTransfer.setData("text/plain", data);
+        });
+      });
+
+      document.querySelectorAll(".nikuds").forEach((nikud) => {
+        nikud.addEventListener("dragstart", (e) => {
+          const type = "nikud";
+          const char = nikud.querySelector("text").textContent;
+          const data = JSON.stringify({ type, char });
+          e.dataTransfer.setData("text/plain", data);
+        });
+      });
+
+      function updateDraggableState() {
+        document.querySelectorAll(".droppedLetters").forEach((dropped) => {
+          const span = dropped.querySelector(".variable-letter");
+          if (span.innerText) {
+            dropped.setAttribute("draggable", "true");
+            dropped.classList.add("draggable");
+          } else {
+            dropped.setAttribute("draggable", "false");
+            dropped.classList.remove("draggable");
+          }
+        });
+      }
+
+      document.querySelectorAll(".droppedLetters").forEach((dropped) => {
+        dropped.addEventListener("dragstart", (e) => {
+          const span = dropped.querySelector(".variable-letter");
+          if (span.innerText) {
+            const type = "letter";
+            const char = span.innerText;
+            const data = JSON.stringify({ type, char, fromPlacement: true });
+            e.dataTransfer.setData("text/plain", data);
+          }
+        });
+      });
+
+      rowLetters.forEach((row) => {
+        row.addEventListener("dragover", (e) => e.preventDefault());
+        row.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+          if (data.fromPlacement) {
+            document.querySelectorAll(".droppedLetters").forEach((dropped) => {
+              const span = dropped.querySelector(".variable-letter");
+              if (span.innerText === data.char) {
+                span.innerText = "";
+                dropped.setAttribute("draggable", "false");
+                dropped.classList.remove("draggable");
+              }
+            });
+            checkCorrectness();
+          }
+        });
+      });
+
+      bottomBar.addEventListener("dragover", (e) => e.preventDefault());
+      bottomBar.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+        if (data.fromPlacement) {
+          document.querySelectorAll(".droppedLetters").forEach((dropped) => {
+            const span = dropped.querySelector(".variable-letter");
+            if (span.innerText === data.char) {
+              span.innerText = "";
+              dropped.setAttribute("draggable", "false");
+              dropped.classList.remove("draggable");
+            }
+          });
+          checkCorrectness();
+        }
+      });
+
+      function checkCorrectness() {
+        let correctArray = [];
+        const letterAreas = document.querySelectorAll(".drop-area");
+        letterAreas.forEach((area, i) => {
+          const element = area.getElementsByTagName("span")[0];
+          const text = element.innerText;
+          if (text === inputLetters[i].value) {
+            correctArray.push({ i: i, correct: true });
+          } else {
+            correctArray.push({ i: i, correct: false });
+          }
+        });
+
+        const getCorrect = correctArray.filter((p) => p.correct === true);
+        if (getCorrect.length === correctArray.length) {
+          console.log("It's correct");
+        } else {
+          console.log("It's incorrect");
+        }
+      }
+
+      dropAreas.forEach((dropArea, i) => {
+        dropArea.addEventListener("dragover", (e) => e.preventDefault());
+
+        dropArea.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+
+          if (data.type === "letter" || data.type === "Letter") {
+            if (e.target.classList.contains("variable-letter")) {
+              e.target.innerText = data.char;
+            } else {
+              const element =
+                e.target.getElementsByClassName("variable-letter")[0];
+              if (element) {
+                element.innerText = data.char;
+              }
+            }
+          } else if (data.type === "nikud") {
+            if (e.target.classList.contains("variable-letter")) {
+              e.target.innerText += data.char;
+            } else {
+              const element =
+                e.target.getElementsByClassName("variable-letter")[0];
+              if (element) {
+                element.innerText += data.char;
+              }
+            }
+          }
+
+          updateDraggableState();
+          checkCorrectness();
+        });
+      });
+
+      updateDraggableState();
+    </script>
+  </body>
+</html>

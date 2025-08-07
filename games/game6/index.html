@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hebrew Drag and Drop</title>
+    <style>
+      body {
+        font-family: "Times New Roman", Times, serif;
+        text-align: center;
+        padding: 20px;
+        font-weight: bold;
+        background: #fff;
+      }
+      
+      .quiz-header {
+        text-align: center;
+        margin-bottom: 20px;
+        position: relative;
+      }
+      
+      .drop-area {
+        width: 70px;
+        height: 70px;
+        margin: 20px auto 20px;
+        position: relative;
+        font-size: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9;
+      }
+      
+      .hebrew-row {
+        margin: 10px auto;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 30px;
+      }
+      
+      .letter {
+        font-size: 40px;
+        cursor: grab;
+        transition: all 0.3s ease; 
+      }
+      
+      .letter:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); 
+        transform: translateY(-2px);
+        color: #4caf50; 
+      }
+      
+      .bottom-bar {
+        margin: 30px auto;
+        display: flex;
+        gap: 20px;
+        border: 1px solid #000;
+        padding: 10px;
+        width: fit-content;
+        min-width: 200px;
+        height: 70px;
+      }
+      
+      svg {
+        width: 73px;
+        height: 89px;
+      }
+      
+      #topImage {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      
+      #bottomImages {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+      }
+      
+      .font-family {
+        font-family: "Times New Roman", serif;
+      }
+      
+      #start-page {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      
+      #start-button {
+        padding: 10px 20px;
+        font-size: 18px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+      
+      #quiz-container {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        padding: 80px;
+      }
+      
+      .droppedLetters {
+        cursor: default;
+      }
+      
+      .droppedLetters.draggable {
+        cursor: grab;
+      }
+      
+      .images {
+        display: flex;
+        gap: 30px;
+      }
+
+      #slide-counter {
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="start-page">
+      <h1>Hebrew Quiz Board</h1>
+      <p>Drag alphabet to match the target value!</p>
+      <button id="start-button">Start Quiz</button>
+    </div>
+
+    <div class="container" id="quiz-container">
+      <div id="slide-counter"></div>
+      <div
+        id="placementArea"
+        style="
+          height: 120px;
+          font-size: 200px;
+          display: flex;
+          margin: 0 auto;
+          width: fit-content;
+          position: relative;
+          gap: 70px;
+        "
+      ></div>
+      <div style="margin-top: -120px" class="images">
+        <div>
+          <img
+            style="margin-right: 200px; height: 160px"
+            src="image1.png"
+            alt="cover image"
+          />
+        </div>
+        <div>
+          <img
+            style="margin-left: 200px; height: 160px"
+            src="image2.png"
+            alt="cover image"
+          />
+        </div>
+      </div>
+      <div style="margin-top: 100px" class="hebrew-row" id="row1"></div>
+      <div class="hebrew-row" id="row2"></div>
+      <div class="hebrew-row" id="row3"></div>
+      <div class="bottom-bar" id="bottomBar"></div>
+    </div>
+    <script src="nikud.js"></script>
+    <script src="input.js"></script>
+    <script>
+      let currentSlideIndex = 0;
+      let inputLetters = [];
+      const quizAudio = inputData.qaudio;
+      const audioElement = new Audio(quizAudio);
+      let currentAudio = null;
+      let hoverTimeout = null;
+
+      function updateSlideCounter() {
+        document.getElementById("slide-counter").innerText = `Slide ${currentSlideIndex + 1} of ${inputData.slides.length}`;
+      }
+
+      function loadSlide(slideIndex) {
+        document.getElementById("placementArea").innerHTML = "";
+        const lettersData = inputData.slides[slideIndex].letters;
+        inputLetters = lettersData.slice().reverse();
+        for (let i = 0; i < inputLetters.length; i++) {
+          let html = "";
+          if (inputLetters[i].type === "fixed") {
+            html += '<div class="drop-area">';
+            html +=
+              '<div class="droppedLetters"><span style="font-size:200px;" class="fixed-letter font-family">' +
+              inputLetters[i].value +
+              "</span></div>";
+          } else {
+            html += '<div class="drop-area doDropHere">';
+            html +=
+              '<div class="droppedLetters" draggable="false"><span style="font-size:200px;" class="variable-letter font-family"></span></div>';
+          }
+          html += "</div>";
+          document.getElementById("placementArea").innerHTML += html;
+        }
+
+        const dropAreas = document.querySelectorAll(".doDropHere");
+        dropAreas.forEach((dropArea) => {
+          dropArea.addEventListener("dragover", (e) => e.preventDefault());
+          dropArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+            const droppedLettersDiv = dropArea.querySelector(".droppedLetters");
+            let variableSpan = droppedLettersDiv.querySelector(".variable-letter");
+
+            if (!variableSpan) {
+              variableSpan = document.createElement("span");
+              variableSpan.className = "variable-letter font-family";
+              variableSpan.style.fontSize = "200px";
+              droppedLettersDiv.appendChild(variableSpan);
+              console.warn(
+                "Recreated .variable-letter span during drop in:",
+                dropArea.outerHTML
+              );
+            }
+
+            if (data.type === "letter") {
+              variableSpan.innerText = data.char;
+              const audioPath = getAudioForChar(data.char);
+              if (audioPath) {
+                if (currentAudio) {
+                  currentAudio.pause();
+                  currentAudio.currentTime = 0;
+                }
+                currentAudio = new Audio(audioPath);
+                currentAudio.play().catch((error) => {
+                  if (error.name !== "AbortError") {
+                    console.error("Error playing drop audio:", error);
+                    alert(
+                      `Failed to play audio for ${data.char}. Please check the audio file.`
+                    );
+                  }
+                });
+              } else {
+                console.warn(`No audio found for letter ${data.char}`);
+              }
+            } else if (data.type === "nikud") {
+              const currentText = variableSpan.innerText || "";
+              const baseLetterMatch = currentText.match(/[^\u0591-\u05C7]/);
+
+              if (baseLetterMatch) {
+                const baseLetter = baseLetterMatch[0];
+                const existingNikud = currentText.replace(baseLetter, "");
+                const newNikudSet = existingNikud + data.char;
+                variableSpan.innerText = baseLetter + newNikudSet;
+
+                const audioPath = getAudioForCharWithNikud(
+                  baseLetter,
+                  newNikudSet
+                );
+                if (audioPath) {
+                  if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                  }
+                  currentAudio = new Audio(audioPath);
+                  currentAudio.play().catch((error) => {
+                    if (error.name !== "AbortError") {
+                      console.error("Error playing drop audio:", error);
+                      alert(
+                        `Failed to play audio for ${baseLetter} with nikud ${newNikudSet}. Please check the audio file.`
+                      );
+                    }
+                  });
+                } else {
+                  console.warn(
+                    `No audio found for ${baseLetter} with nikud ${newNikudSet}`
+                  );
+                }
+              } else {
+                console.warn("No letter present to add nikud to.");
+              }
+            }
+
+            updateDraggableState();
+            checkCorrectness();
+          });
+        });
+
+        document.querySelectorAll(".droppedLetters").forEach((dropped) => {
+          dropped.addEventListener("dragstart", (e) => {
+            const span = dropped.querySelector(".variable-letter");
+            if (span && span.innerText) {
+              const type = "letter";
+              const char = span.innerText;
+              const data = JSON.stringify({ type, char, fromPlacement: true });
+              e.dataTransfer.setData("text/plain", data);
+            }
+          });
+        });
+
+        updateSlideCounter();
+        updateDraggableState();
+      }
+
+      const letters = [
+        { char: "י", w: 50,  },
+        { char: "ט", w: 71,  },
+        { char: "ח", w: 69,  },
+        { char: "ז", w: 51,  },
+        { char: "ו", w: 49,  },
+        { char: "ה", w: 70,  },
+        { char: "ד", w: 65,  },
+        { char: "ג", w: 56,  },
+        { char: "ב", w: 65,  },
+        { char: "בּ", w: 65,  },
+        { char: "א", w: 65,  },
+      ];
+      const letters2 = [
+        { char: "ק", w: 51,  },
+        { char: "צ", w: 51,  },
+        { char: "פ", w: 51,  },
+        { char: "פּ", w: 51,  },
+        { char: "ע", w: 51,  },
+        { char: "ס", w: 51,  },
+        { char: "נ", w: 51,  },
+        { char: "מ", w: 72,  },
+        {
+          char: "ל",
+          w: 62,
+          h: 84,
+          audio: "MultipleFiles/LettersSound/ל-L (1).m4a",
+        },
+        { char: "כ", w: 63,  },
+        { char: "כּ", w: 63,  },
+      ];
+      const letters3 = [
+        { char: "ת", w: 54,  },
+        { char: "תּ", w: 54, },
+        {
+          char: "שׂ",
+          w: 54,
+          simple: true,
+          
+        },
+        {
+          char: "שׁ",
+          w: 54,
+          simple: true,
+          
+        },
+        {
+          char: "ר",
+          w: 51,
+          h: 75,
+        
+        },
+      ];
+      const hebrewNikuds = [
+        { char: "ָ" },
+        { char: "ַ" },
+        { char: "ֵ" },
+        { char: "ֶ" },
+        { char: "ִ" },
+        { char: "ְ" },
+        { char: "ּ" },
+      ];
+
+      function createLetter(
+        { char, w, h = 77, simple = false, audio },
+        source
+      ) {
+        if (char == "שׂ" || char == "שׁ") {
+          const svg = simple
+            ? `<svg style="width: 92px;height: 102px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
+                 <path d="M0,0L${w},0 ${w},${h} 0,${h}z" fill="#FFF" fill-opacity="0"/>
+                 <text class="font-family" font-size="81" fill="#000" x="5" y="60">${char}</text>
+             </svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
+                 <path d="M0,0L${w},0 ${w},${h} 0,${h}z" fill="#FFF" fill-opacity="0"/>
+                 <text class="font-family" font-size="96" fill="#000" x="10" y="${
+                   h - 8
+                 }">${char}</text>
+             </svg>`;
+          return `<div class="letter" draggable="true" data-source="${source}" data-audio="${audio}">${svg}</div>`;
+        } else {
+          const svg = simple
+            ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
+                 <path d="M0,0L${w},0 ${w},${h} 0,${h}z" fill="#FFF" fill-opacity="0"/>
+                 <text class="font-family" font-size="64" fill="#000" x="5" y="60">${char}</text>
+             </svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}">
+                 <path d="M0,0L${w},0 ${w},${h} 0,${h}z" fill="#FFF" fill-opacity="0"/>
+                 <text class="font-family" font-size="96" fill="#000" x="10" y="${
+                   h - 8
+                 }">${char}</text>
+             </svg>`;
+          return `<div class="letter" draggable="true" data-source="${source}" data-audio="${audio}">${svg}</div>`;
+        }
+      }
+
+      function createNikud(
+        { char },
+        index,
+        textX = 10,
+        textY = 35,
+        pathX = 8,
+        pathY = 4
+      ) {
+        let html = `<div class="nikuds" draggable="true" data-type="nikud" data-id="${char}">`;
+        html += `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 73 89">`;
+
+        const finalTextX = index === 4 ? 19 : index === 6 ? -6 : textX;
+        const finalTextY = index === 4 ? 33 : index === 6 ? 40 : textY;
+
+        if (index !== 5) {
+          html += `<text class="font-family" font-size="96" fill="#000" x="${finalTextX}" y="${finalTextY}">${char}</text>`;
+        }
+
+        if ([0, 1, 2, 3].includes(index)) {
+          html += `<path d="M20.15,10A10.08,10.08,0,1,0,0,10A10.08,10.08,0,0,0,20.15,10Z"
+                   fill="#BFBFBF" stroke="#808080" stroke-width="1"
+                   transform="translate(9, 15)"/>`;
+        } else if (index === 4) {
+          html += `<path d="M20.15,10A10.08,10.08,0,1,0,0,10A10.08,10.08,0,0,0,20.15,10Z"
+                   fill="#BFBFBF" stroke="#808080" stroke-width="1"
+                   transform="translate(4, 15)"/>`;
+        } else if (index === 5) {
+          html += `<path d="M20.15,10A10.08,10.08,0,1,0,0,10A10.08,10.08,0,0,0,20.15,10Z"
+                   fill="#BFBFBF" stroke="#808080" stroke-width="1"
+                   transform="translate(8, 16)"/>
+                   <text class="font-family" font-size="96" fill="#000" x="15" y="38">${char}</text>`;
+        } else if (index === 6) {
+          html += `<path d="M20.15,10A10.08,10.08,0,1,0,0,10A10.08,10.08,0,0,0,20.15,10Z"
+                   fill="#BFBFBF" stroke="#808080" stroke-width="1"
+                   transform="translate(10, 20)"/>`;
+        }
+        html += `</svg></div>`;
+        return html;
+      }
+
+      document.getElementById("row1").innerHTML = letters
+        .map((l) => createLetter(l, "row1"))
+        .join("");
+      document.getElementById("row2").innerHTML = letters2
+        .map((l) => createLetter(l, "row2"))
+        .join("");
+      document.getElementById("row3").innerHTML = letters3
+        .map((l) => createLetter(l, "row3"))
+        .join("");
+      document.getElementById("bottomBar").innerHTML = hebrewNikuds
+        .map((id, i) => createNikud(id, i))
+        .join("");
+
+      const startPage = document.getElementById("start-page");
+      const quizContainer = document.getElementById("quiz-container");
+      const startButton = document.getElementById("start-button");
+      let dropAreas = document.querySelectorAll(".doDropHere");
+      const rowLetters = document.querySelectorAll(".hebrew-row");
+      const bottomBar = document.getElementById("bottomBar");
+
+      startPage.style.display = "flex";
+      quizContainer.style.display = "none";
+
+      function startQuiz() {
+        startPage.style.display = "none";
+        quizContainer.style.display = "flex";
+
+        audioElement.play().catch((error) => {
+          console.error("Error playing quiz audio:", error);
+          alert("Audio playback failed. Please check the audio file path.");
+        });
+
+        if (typeof initializeSCORM === "function") {
+          initializeSCORM();
+        }
+
+        initQuiz();
+      }
+
+      function initQuiz() {
+        addHoverAudioListeners();
+        updateDraggableState();
+        loadSlide(currentSlideIndex);
+      }
+
+      startButton.addEventListener("click", startQuiz);
+
+      document.querySelectorAll(".letter").forEach((letter) => {
+        letter.addEventListener("dragstart", (e) => {
+          const type = "letter";
+          const char = letter.querySelector("text").textContent;
+          const data = JSON.stringify({ type, char });
+          e.dataTransfer.setData("text/plain", data);
+        });
+      });
+
+      document.querySelectorAll(".nikuds").forEach((nikud) => {
+        nikud.addEventListener("dragstart", (e) => {
+          const type = "nikud";
+          const char =
+            nikud.querySelector("text")?.textContent ||
+            nikud.getAttribute("data-id");
+          const data = JSON.stringify({ type, char });
+          e.dataTransfer.setData("text/plain", data);
+        });
+      });
+
+      function updateDraggableState() {
+        document.querySelectorAll(".droppedLetters").forEach((dropped) => {
+          let span = dropped.querySelector(".variable-letter");
+          if (!span) {
+            span = document.createElement("span");
+            span.className = "variable-letter font-family";
+            span.style.fontSize = "200px";
+            dropped.appendChild(span);
+            console.warn(
+              "Recreated missing .variable-letter span in a .droppedLetters element. Parent HTML:",
+              dropped.outerHTML
+            );
+          }
+          if (span.innerText) {
+            dropped.setAttribute("draggable", "true");
+            dropped.classList.add("draggable");
+          } else {
+            dropped.setAttribute("draggable", "false");
+            dropped.classList.remove("draggable");
+          }
+        });
+      }
+
+      rowLetters.forEach((row) => {
+        row.addEventListener("dragover", (e) => e.preventDefault());
+        row.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+          if (data.fromPlacement) {
+            document.querySelectorAll(".droppedLetters").forEach((dropped) => {
+              const span = dropped.querySelector(".variable-letter");
+              if (span && span.innerText === data.char) {
+                span.innerText = "";
+                dropped.setAttribute("draggable", "false");
+                dropped.classList.remove("draggable");
+              }
+            });
+            checkCorrectness();
+          }
+        });
+      });
+
+      bottomBar.addEventListener("dragover", (e) => e.preventDefault());
+      bottomBar.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+        if (data.fromPlacement) {
+          document.querySelectorAll(".droppedLetters").forEach((dropped) => {
+            const span = dropped.querySelector(".variable-letter");
+            if (span && span.innerText === data.char) {
+              span.innerText = "";
+              dropped.setAttribute("draggable", "false");
+              dropped.classList.remove("draggable");
+            }
+          });
+          checkCorrectness();
+        }
+      });
+
+      function checkCorrectness() {
+        let correctArray = [];
+        const letterAreas = document.querySelectorAll(".drop-area");
+        letterAreas.forEach((area, i) => {
+          const element = area.getElementsByTagName("span")[0];
+          const text = element ? element.innerText : "";
+          if (text === inputLetters[i].value) {
+            correctArray.push({ i: i, correct: true });
+          } else {
+            correctArray.push({ i: i, correct: false });
+          }
+        });
+
+        const getCorrect = correctArray.filter((p) => p.correct === true);
+        if (getCorrect.length === correctArray.length) {
+          console.log(
+            "All letters correctly placed, triggering audio sequence"
+          );
+          playAudioSequence().then(() => {
+            if (currentSlideIndex < inputData.slides.length - 1) {
+              currentSlideIndex++;
+              console.log(`Loading next slide: ${currentSlideIndex + 1}`);
+              loadSlide(currentSlideIndex);
+            } else {
+              console.log("Quiz completed!");
+              alert("Quiz completed!");
+            }
+          });
+        } else {
+          console.log("It's incorrect");
+        }
+      }
+
+      function addHoverAudioListeners() {
+        document.querySelectorAll(".letter").forEach((letter) => {
+          letter.removeEventListener("mouseover", handleMouseOver);
+          letter.removeEventListener("mouseleave", handleMouseLeave);
+
+          letter.addEventListener("mouseover", handleMouseOver);
+          letter.addEventListener("mouseleave", handleMouseLeave);
+        });
+      }
+
+      function handleMouseOver(e) {
+        const audioPath = e.currentTarget.getAttribute("data-audio");
+        if (audioPath) {
+          if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+          }
+          hoverTimeout = setTimeout(() => {
+            if (currentAudio) {
+              currentAudio.pause();
+              currentAudio.currentTime = 0;
+            }
+            currentAudio = new Audio(audioPath);
+            currentAudio.play().catch((error) => {
+              if (error.name !== "AbortError") {
+                console.error("Error playing hover audio:", error);
+              }
+            });
+          }, 200);
+        }
+      }
+
+      function handleMouseLeave() {
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        }
+        if (hoverTimeout) {
+          clearTimeout(hoverTimeout);
+        }
+      }
+
+      async function playAudioSequence() {
+        console.log("Starting audio sequence playback");
+        const letterAreas = document.querySelectorAll(".drop-area");
+        let indices = [];
+
+        letterAreas.forEach((area, i) => {
+          const element = area.getElementsByTagName("span")[0];
+          if (element && element.innerText) {
+            indices.push(i);
+            console.log(`Found letter at index ${i}: ${element.innerText}`);
+          }
+        });
+
+        if (indices.length === 0) {
+          console.warn("No letters found to play audio for.");
+          return;
+        }
+
+        indices.sort((a, b) => b - a);
+
+        for (let i of indices) {
+          const element = letterAreas[i].getElementsByTagName("span")[0];
+          const char = element.innerText;
+          const letter = char.split(/[\u0591-\u05C7]/)[0];
+          const nikud = char.match(/[\u0591-\u05C7]/)?.[0];
+          const audioPath = nikud
+            ? getAudioForCharWithNikud(letter, nikud)
+            : getAudioForChar(char);
+          console.log(
+            `Playing audio for char ${char} at index ${i}, path: ${audioPath}`
+          );
+          if (audioPath) {
+            if (currentAudio) {
+              currentAudio.pause();
+              currentAudio.currentTime = 0;
+            }
+            currentAudio = new Audio(audioPath);
+            try {
+              await new Promise((resolve) => {
+                currentAudio.onended = resolve;
+                currentAudio.play();
+                console.log(`Audio started for ${char}`);
+              });
+              console.log(`Audio ended for ${char}`);
+            } catch (error) {
+              console.error(`Error playing audio for ${char}:`, error);
+            }
+          }
+        }
+        console.log("Audio sequence playback completed");
+      }
+
+      function getAudioForChar(char) {
+        const allLetters = [...letters, ...letters2, ...letters3];
+        const firstChar = char.charAt(0);
+        let match = allLetters.find((letter) => letter.char === char);
+        if (!match) {
+          match = allLetters.find(
+            (letter) => letter.char.charAt(0) === firstChar
+          );
+        }
+        return match ? match.audio : null;
+      }
+
+      function getAudioForCharWithNikud(letter, nikudSet) {
+        if (InputNikud[letter]?.[nikudSet]) {
+          console.log(`Found audio in InputNikud for ${letter} with ${nikudSet}: ${InputNikud[letter][nikudSet]}`);
+          return InputNikud[letter][nikudSet];
+        }
+      
+        const nikuds = nikudSet.match(/[\u0591-\u05C7]/g) || [nikudSet];
+        const lastNikud = nikuds[nikuds.length - 1];
+        if (nikuds.length > 1) {
+          console.warn(`Multiple nikuds detected: ${nikuds}. Using last nikud for audio: ${lastNikud}`);
+        }
+      
+        if (InputNikud[letter]?.[lastNikud]) {
+          console.log(`Found audio in InputNikud for ${letter} with ${lastNikud}: ${InputNikud[letter][lastNikud]}`);
+          return InputNikud[letter][lastNikud];
+        }
+        const baseAudio = getAudioForChar(letter);
+        if (baseAudio) {
+          console.warn(`No direct audio for ${letter} with ${nikudSet}. Using base letter audio: ${baseAudio}`);
+          return baseAudio;
+        }
+      
+        const letterName = letterNames[letter] || "unknown";
+        const nikudName = nikudNames[lastNikud] || "unknown";
+        const audioPath = `audio/${letterName}_${nikudName}.mp3`;
+        console.warn(`No audio mapping found for ${letter} with ${nikudSet}. Using fallback: ${audioPath}`);
+        return audioPath;
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        updateDraggableState();
+      });
+    </script>
+  </body>
+</html>
