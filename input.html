@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LMS EduTool - Teacher Portal</title>
+  <style>
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+    
+    body {
+      font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+      background: linear-gradient(135deg, #98fb98, #add8e6);
+      color: #333;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Header - Fixed */
+    header {
+      background: #ff1493;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      flex-shrink: 0;
+      animation: fadeInDown 0.5s ease-out;
+    }
+    
+    header h1 {
+      font-size: 2rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      margin: 0;
+    }
+    
+    header a {
+      color: #fffacd;
+      font-size: 1rem;
+      text-decoration: none;
+      margin-left: 15px;
+      padding: 5px 10px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 15px;
+      transition: all 0.3s;
+    }
+    
+    header a:hover {
+      color: #ffd700;
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.05);
+    }
+    
+    /* Main content - Flex layout */
+    .main-content {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    
+    /* Sidebar - Scrollable */
+    .sidebar {
+      width: 300px;
+      background: linear-gradient(to bottom, #ff8a00, #ff1493);
+      color: white;
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+      animation: slideInLeft 0.5s ease-out;
+    }
+    
+    .game-list-section h2 {
+      color: white;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+      position: relative;
+      padding-bottom: 10px;
+    }
+    
+    .game-list-section h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.5);
+      border-radius: 3px;
+    }
+    
+    .game-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .game-card {
+      background: rgba(255,255,255,0.95);
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      transform: translateY(0);
+      opacity: 0;
+      animation: fadeInUp 0.5s ease-out forwards;
+      border-left: 5px solid #1e90ff;
+    }
+    
+    .game-card:nth-child(1) { animation-delay: 0.1s; }
+    .game-card:nth-child(2) { animation-delay: 0.2s; }
+    .game-card:nth-child(3) { animation-delay: 0.3s; }
+    .game-card:nth-child(4) { animation-delay: 0.4s; }
+    .game-card:nth-child(5) { animation-delay: 0.5s; }
+    .game-card:nth-child(6) { animation-delay: 0.6s; }
+    
+    .game-card:hover {
+      transform: translateY(-5px) translateX(5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      border-left: 5px solid #ff1493;
+    }
+    
+    .game-card h3 {
+      color: #ff1493;
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+      transition: color 0.3s;
+    }
+    
+    .game-card p {
+      color: #555;
+      line-height: 1.5;
+    }
+    
+    .game-card:hover h3 {
+      color: #1e90ff;
+    }
+    
+    /* Game preview area - Fixed */
+    .game-preview {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      overflow: hidden;
+      animation: fadeIn 0.8s ease-out;
+    }
+    
+    .game-preview-header {
+      padding: 15px;
+      background: linear-gradient(to right, #1e90ff, #00bfff);
+      color: white;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    #gamePreviewFrame {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: white;
+      transition: opacity 0.3s;
+    }
+    
+    #gamePreviewFrame.loading {
+      opacity: 0.5;
+    }
+    
+    /* Footer - Fixed */
+    footer {
+      background: #ff1493;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      animation: fadeInUp 0.5s ease-out;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes fadeInUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeInDown {
+      from { 
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideInLeft {
+      from { 
+        opacity: 0;
+        transform: translateX(-50px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    /* Loading spinner */
+    .spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(30, 144, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #1e90ff;
+      animation: spin 1s ease-in-out infinite;
+      display: none;
+    }
+    
+    @keyframes spin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        max-height: 40vh;
+        animation: fadeInUp 0.5s ease-out;
+      }
+      
+      header h1 {
+        font-size: 1.5rem;
+      }
+      
+      header a {
+        font-size: 0.9rem;
+        margin-left: 10px;
+      }
+      
+      .game-list-section h2 {
+        font-size: 1.3rem;
+      }
+      
+      .game-card {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Teacher Dashboard</h1>
+    <a href="index.html">Student Interface</a>
+  </header>
+
+  <div class="main-content">
+    <!-- Scrollable Sidebar -->
+    <div class="sidebar">
+      <div class="game-list-section">
+        <h2>Available Games</h2>
+        <div class="game-list" id="gameList"></div>
+      </div>
+    </div>
+    
+    <!-- Fixed Game Preview Area -->
+    <div class="game-preview">
+      <div class="game-preview-header">
+        Game Preview
+      </div>
+      <div class="spinner" id="spinner"></div>
+      <iframe id="gamePreviewFrame" frameborder="0" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 LMS EduTool | Powered by JavaScript</p>
+  </footer>
+
+  <script>
+    const defaultGames = [
+      { id: "game1", title: "Alphabet Matching Game", instructions: "Drag and drop the letters to the correct boxes." },
+      { id: "game2", title: "Math Puzzle Challenge", instructions: "Solve the puzzle using arithmetic skills." },
+      { id: "game3", title: "Color Sorter", instructions: "Sort the colors into the correct buckets." },
+      { id: "game4", title: "Shape Matcher", instructions: "Match shapes to their corresponding slots." },
+      { id: "game5", title: "Word Scramble", instructions: "Unscramble the letters to form correct words." },
+      { id: "game6", title: "Number Sequence", instructions: "Arrange numbers in the correct sequence." }
+    ];
+
+    function loadGameList() {
+      const gameListDiv = document.getElementById('gameList');
+      gameListDiv.innerHTML = '';
+
+      defaultGames.forEach((game, index) => {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+          <h3>${game.title}</h3>
+          <p>${game.instructions}</p>
+        `;
+        card.addEventListener('click', () => {
+          const spinner = document.getElementById('spinner');
+          const iframe = document.getElementById('gamePreviewFrame');
+          
+          iframe.classList.add('loading');
+          spinner.style.display = 'block';
+          
+          iframe.onload = () => {
+            iframe.classList.remove('loading');
+            spinner.style.display = 'none';
+          };
+          
+          iframe.src = `games/game${index + 1}/input.html`;
+          document.querySelector('.game-preview-header').textContent = `Preview: ${game.title}`;
+        });
+        
+        gameListDiv.appendChild(card);
+      });
+    }
+
+    // Load first game by default
+    window.addEventListener('DOMContentLoaded', () => {
+      loadGameList();
+      const iframe = document.getElementById('gamePreviewFrame');
+      iframe.classList.add('loading');
+      document.getElementById('spinner').style.display = 'block';
+      
+      iframe.onload = () => {
+        iframe.classList.remove('loading');
+        document.getElementById('spinner').style.display = 'none';
+      };
+      
+      iframe.src = 'games/game1/input.html';
+      document.querySelector('.game-preview-header').textContent = `Preview: ${defaultGames[0].title}`;
+    });
+  </script>
+</body>
+</html>

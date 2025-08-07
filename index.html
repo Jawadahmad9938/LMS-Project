@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LMS EduTool - Full Screen Game Center</title>
+  <script src="https://cdn.jsdelivr.net/npm/scorm-api-wrapper@0.0.5/src/SCORMapi1_2.js"></script>
+  <script src="../../nikud.js"></script>
+  <style>
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+    
+    body {
+      font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      color: #333;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Header - Slimmer */
+    .app-header {
+      background: linear-gradient(to right, #ff8a00, #e52e71);
+      color: white;
+      padding: 10px 15px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    
+    .app-header h1 {
+      font-size: 1.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+      margin: 0;
+    }
+    
+    .main-content {
+      display: flex;
+      flex: 1;
+      position: relative;
+      min-height: 0; 
+    }
+    
+    .nav-panel {
+      width: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      background: rgba(255,255,255,0.7);
+      transition: all 0.3s;
+      z-index: 2;
+      flex-shrink: 0;
+    }
+    
+    .nav-panel:hover {
+      background: rgba(255,255,255,0.9);
+    }
+    
+    .nav-button {
+      width: 100%;
+      padding: 12px 5px;
+      margin: 8px 0;
+      background: linear-gradient(to right, #ff8a00, #e52e71);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      height: 100px;
+    }
+    
+    .nav-button:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .nav-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #ccc;
+    }
+    
+    .game-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      min-width: 0;
+    }
+    
+    .game-instructions {
+      background: white;
+      color: #e52e71;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 1rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+    
+    .game-frame-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: relative;
+      min-height: 0;
+    }
+    
+    #gameFrame {
+      width: 100%;
+      height: 100%;
+      min-height: 500px;
+      border: none;
+      background: white;
+    }
+    
+    .current-game {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #555;
+      flex-shrink: 0;
+    }
+    
+    .app-footer {
+      background: linear-gradient(to right, #ff8a00, #e52e71);
+      color: white;
+      padding: 8px;
+      text-align: center;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+    
+    .welcome-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #ff8a00, #e52e71);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      color: white;
+    }
+    
+    .welcome-screen h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+      text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+    }
+    
+    .welcome-screen p {
+      font-size: 1.2rem;
+      max-width: 700px;
+      text-align: center;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    
+    .start-button {
+      padding: 15px 40px;
+      background: white;
+      color: #e52e71;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .start-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+      }
+      
+      .nav-panel {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 5px;
+      }
+      
+      .nav-button {
+        width: auto;
+        padding: 8px 15px;
+        margin: 0 5px;
+        writing-mode: horizontal-tb;
+        height: auto;
+      }
+      
+      .game-center {
+        padding: 5px;
+      }
+      
+      .game-instructions {
+        font-size: 0.9rem;
+      }
+      
+      .welcome-screen h1 {
+        font-size: 1.8rem;
+      }
+      
+      .welcome-screen p {
+        font-size: 1rem;
+        padding: 0 20px;
+      }
+      
+      .start-button {
+        padding: 12px 30px;
+        font-size: 1rem;
+      }
+      
+      #gameFrame {
+        min-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Screen -->
+  <div class="welcome-screen" id="welcomeScreen">
+    <h1>Welcome to Learning Fun!</h1>
+    <p>Enjoy our interactive games with maximum play area and easy side navigation!</p>
+    <button class="start-button" id="startButton">Start Playing</button>
+  </div>
+
+  <!-- Main App Layout -->
+  <div id="appContainer" style="display: none;">
+    <header class="app-header">
+      <h1>Alphabet Matching Game</h1>
+    </header>
+    
+    <div class="main-content">
+      <!-- Left Navigation -->
+      <div class="nav-panel left-panel">
+        <button class="nav-button" id="prevBtn" disabled>Previous</button>
+        <button class="nav-button" id="teacherBtn">Teacher</button>
+      </div>
+      
+      <!-- Center Game Area (Maximized) -->
+      <div class="game-center">
+        <div class="game-instructions" id="instructions">
+          Drag and drop the letters to the correct boxes.
+        </div>
+        
+        <div class="game-frame-container">
+          <iframe id="gameFrame" frameborder="0" allowfullscreen></iframe>
+        </div>
+        
+        <div class="current-game">
+          Playing: <span id="currentGameTitle">Alphabet Matching Game</span>
+        </div>
+      </div>
+      
+      <!-- Right Navigation -->
+      <div class="nav-panel right-panel">
+        <button class="nav-button" id="nextBtn">Next</button>
+      </div>
+    </div>
+    
+    <footer class="app-footer">
+      &copy; 2025 LMS EduTool | Powered by JavaScript • SCORM
+    </footer>
+  </div>
+
+  <script>
+    // Game data
+    const defaultData = {
+      "gameList": [
+        { "id": "game1", "title": "Alphabet Matching Game", "instructions": "Drag and drop the letters to the correct boxes." },
+        { "id": "game2", "title": "Math Puzzle Challenge", "instructions": "Solve the puzzle using arithmetic skills." },
+        { "id": "game3", "title": "Color Sorter", "instructions": "Sort the colors into the correct buckets." },
+        { "id": "game4", "title": "Shape Matcher", "instructions": "Match shapes to their corresponding slots." },
+        { "id": "game5", "title": "Word Scramble", "instructions": "Unscramble the letters to form correct words." },
+        { "id": "game6", "title": "Number Sequence", "instructions": "Arrange numbers in the correct sequence." },
+        { "id": "game7", "title": "Digital Clock", "instructions": "Set the digital clock to the correct time." }
+      ]
+    };
+    
+    const inputData = JSON.parse(localStorage.getItem('lmsGameData')) || defaultData;
+    let currentIndex = 0;
+    let scormAPI = null;
+
+    // Initialize app
+    document.getElementById('startButton').addEventListener('click', () => {
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      loadGame(currentIndex);
+    });
+
+    // Game navigation
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        loadGame(currentIndex);
+      }
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (currentIndex < inputData.gameList.length - 1) {
+        currentIndex++;
+        loadGame(currentIndex);
+      }
+    });
+
+    document.getElementById('teacherBtn').addEventListener('click', () => {
+      window.location.href = 'input.html';
+    });
+
+    // Load game function
+    function loadGame(index) {
+      const game = inputData.gameList[index];
+      if (!game) return;
+
+      document.querySelector('.app-header h1').textContent = game.title;
+      document.getElementById('currentGameTitle').textContent = game.title;
+      document.getElementById('instructions').textContent = game.instructions;
+      
+      const gameUrl = `games/game${index + 1}/index.html`;
+      document.getElementById('gameFrame').src = gameUrl;
+      
+      // Update button states
+      document.getElementById('prevBtn').disabled = index === 0;
+      document.getElementById('nextBtn').disabled = index === inputData.gameList.length - 1;
+      
+      // SCORM integration
+      if (scormAPI) {
+        scormAPI.set('cmi.core.lesson_status', 'incomplete');
+        scormAPI.set('cmi.core.score.raw', '0');
+        scormAPI.save();
+      }
+    }
+
+    // Game completion handler
+    function completeGame(score = 100) {
+      if (scormAPI) {
+        scormAPI.set('cmi.core.lesson_status', 'completed');
+        scormAPI.set('cmi.core.score.raw', score.toString());
+        scormAPI.save();
+      }
+      if (currentIndex < inputData.gameList.length - 1) {
+        currentIndex++;
+        loadGame(currentIndex);
+      }
+    }
+
+    // Listen for game completion messages
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'gameComplete') {
+        completeGame(event.data.score || 100);
+      }
+    });
+
+    // Clean up on exit
+    window.addEventListener('beforeunload', () => {
+      if (scormAPI) {
+        scormAPI.set('cmi.core.lesson_status', 'completed');
+        scormAPI.save();
+        scormAPI.quit();
+      }
+    });
+  </script>
+</body>
+</html>
