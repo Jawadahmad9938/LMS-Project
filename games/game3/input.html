@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Darakoi Teacher Panel For Input</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">🎓Darakoi Teacher Panel</h2>
+
+    <div class="space-y-6">
+      <!-- Image Inputs -->
+      <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Images</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Background Image</label>
+            <input type="file" id="backgroundInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+            <img id="backgroundPreview" class="mt-2 w-full h-24 object-cover rounded-md hidden" alt="Background Preview" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Object Image</label>
+            <input type="file" id="objectInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+            <img id="objectPreview" class="mt-2 w-full h-24 object-cover rounded-md hidden" alt="Object Preview" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Sound Inputs -->
+      <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Sounds</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Rotate Sound</label>
+            <input type="file" id="rotateSoundInput" accept="audio/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+            <audio id="rotateSoundPreview" controls class="mt-2 w-full hidden" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Detection Sound</label>
+            <input type="file" id="detectSoundInput" accept="audio/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+            <audio id="detectSoundPreview" controls class="mt-2 w-full hidden" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Win Sound</label>
+            <input type="file" id="winSoundInput" accept="audio/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+            <audio id="winSoundPreview" controls class="mt-2 w-full hidden" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Inputs -->
+      <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Game Settings</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Number of Objects</label>
+            <input type="number" id="numObjects" value="5" min="1" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Object Size (px)</label>
+            <input type="number" id="objectSize" value="60" min="10" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Show Duration (ms)</label>
+            <input type="number" id="showDuration" value="1000" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-2">Interval (ms)</label>
+            <input type="number" id="interval" value="5000" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="generateJSON()" class="mt-6 w-full bg-blue-600 text-white font-semibold py-3 rounded-md hover:bg-blue-700 transition duration-200">Download input.json</button>
+  </div>
+
+  <script>
+    // Preview uploaded images and sounds
+    function setupPreview(inputId, previewId, type) {
+      const input = document.getElementById(inputId);
+      const preview = document.getElementById(previewId);
+      input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (file) {
+          const url = URL.createObjectURL(file);
+          preview.src = url;
+          preview.classList.remove('hidden');
+          if (type === 'audio') {
+            preview.load();
+          }
+        }
+      });
+    }
+
+    setupPreview('backgroundInput', 'backgroundPreview', 'image');
+    setupPreview('objectInput', 'objectPreview', 'image');
+    setupPreview('rotateSoundInput', 'rotateSoundPreview', 'audio');
+    setupPreview('detectSoundInput', 'detectSoundPreview', 'audio');
+    setupPreview('winSoundInput', 'winSoundPreview', 'audio');
+
+    // Get asset filename and prefix with "assets/"
+    function handleFile(fileInput) {
+      const file = fileInput.files[0];
+      return file ? "assets/" + file.name : "";
+    }
+
+    function generateJSON() {
+      const data = {
+        background: handleFile(document.getElementById('backgroundInput')),
+        objectImage: handleFile(document.getElementById('objectInput')),
+        sounds: {
+          rotate: handleFile(document.getElementById('rotateSoundInput')),
+          detection: handleFile(document.getElementById('detectSoundInput')),
+          win: handleFile(document.getElementById('winSoundInput'))
+        },
+        settings: {
+          numObjects: parseInt(document.getElementById('numObjects').value) || 5,
+          objectSize: parseInt(document.getElementById('objectSize').value) || 60,
+          showDuration: parseInt(document.getElementById('showDuration').value) || 1000,
+          interval: parseInt(document.getElementById('interval').value) || 5000
+        }
+      };
+
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "input.json";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // Access game-specific data
+    const gameData = window.parent.currentGameData || { letters: ['A', 'B', 'C'] };
+    document.getElementById('gameContent').textContent = `Match these letters: ${gameData.letters?.join(', ') || 'No data'}`;
+
+    function completeGame() {
+      window.parent.postMessage({ type: 'gameComplete', score: 90 }, '*');
+    }
+  </script>
+</body>
+</html>
