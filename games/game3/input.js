@@ -1,6 +1,6 @@
 const InputData = 
 {
-  "background": "assets/background image7.jpg",
+  "background": "assets/background image5.jpg",
   "objectImage": "assets/Objectimage3.png",
   "sounds": {
     "rotate": "assets/beep-329314.mp3",
