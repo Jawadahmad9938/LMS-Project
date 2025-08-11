@@ -14,53 +14,50 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        gap: 3rem;
-        padding: 1rem 0rem;
+        gap: 2rem;
+        padding: 2rem;
         font-family: sans-serif;
         background: #fafafa;
-        height: 100vh;
-      
-        /* ✅ Allow horizontal scroll */
-        overflow-x: auto;
-        align-items: flex-start; /* So horizontal scroll works correctly */
+        align-items: center;
       }
       
       h2 {
         font-weight: 600;
       }
       
-      /* ✅ Wrap board in scrollable container */
+      /* Board container for desktop */
       .board-wrapper {
         width: 100%;
-        overflow-x: auto;
+        max-width: 1200px; /* Constrain for desktop */
+        margin: 0 auto;
       }
       
-      /* ✅ Board is large and scrolls */
+      /* Board styling for desktop */
       .board {
         display: flex;
-        gap: 8rem;
-        flex: 1 0 auto;
+        gap: 4rem;
         position: relative;
-        width: max-content; /* Instead of fixed vw, let it grow with content */
-        height: 186vh;
+        width: 100%;
+        min-height: 600px; /* Fixed height for desktop */
         border: 1px solid black;
         background: #fff;
       }
       
-      /* ✅ Wrap palette in scrollable container */
+      /* Palette container for desktop */
       .palette-wrapper {
         width: 100%;
-        overflow-x: auto;
+        max-width: 1200px; /* Constrain for desktop */
+        margin: 0 auto;
       }
       
-      /* ✅ Palette scrolls left/right based on content */
+      /* Palette styling for desktop */
       .palette {
         display: flex;
         align-items: center;
         gap: 2rem;
         padding: 1rem;
         flex-wrap: nowrap;
-        width: max-content;
+        justify-content: center;
       }
       
       .slot {
@@ -113,12 +110,25 @@
         stroke-width: 4;
       }
       
+      /* Ensure responsiveness for desktop screens */
+      @media screen and (min-width: 1024px) {
+        .board {
+          min-height: 700px; /* Slightly larger for bigger screens */
+        }
+        .palette {
+          gap: 3rem; /* More spacing for larger screens */
+        }
+      }
     </style>
   </head>
 
   <body>
-    <div class="board" id="board"></div>
-    <div class="palette" id="palette"></div>
+    <div class="board-wrapper">
+      <div class="board" id="board"></div>
+    </div>
+    <div class="palette-wrapper">
+      <div class="palette" id="palette"></div>
+    </div>
 
     <script type="module">
       import { inputData } from "./input.js";

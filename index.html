@@ -26,15 +26,35 @@
     .app-header {
       background: linear-gradient(to right, #ff8a00, #e52e71);
       color: white;
-      padding: 12px 20px;
+      padding: 15px 25px;
       text-align: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
     }
     
     .app-header h1 {
-      font-size: 1.5rem;
+      font-size: 1.8rem;
       text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      margin: 0;
+    }
+    
+    .menu-toggle {
+      position: absolute;
+      left: 20px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.8rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    
+    .menu-toggle:hover {
+      transform: scale(1.1);
     }
     
     .main-content {
@@ -44,61 +64,97 @@
       overflow: hidden;
     }
     
-    .nav-panel {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: rgba(255,255,255,0.8);
-      padding: 10px;
-      width: 70px;
-      flex-shrink: 0;
-      transition: 0.3s ease;
+    /* Sidebar for desktop */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -250px;
+      width: 250px;
+      height: 100vh;
+      background: rgba(255,255,255,0.9);
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      transition: left 0.3s ease;
+      z-index: 1000;
     }
     
-    .nav-button {
+    .sidebar.open {
+      left: 0;
+    }
+    
+    .sidebar h2 {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      color: #e52e71;
+    }
+    
+    .sidebar ul {
+      list-style: none;
+    }
+    
+    .sidebar li {
+      margin-bottom: 10px;
+    }
+    
+    .sidebar button {
+      width: 100%;
       padding: 10px;
-      margin: 10px 0;
       background: linear-gradient(to right, #ff8a00, #e52e71);
       color: white;
       border: none;
-      border-radius: 50px;
-      font-size: 0.85rem;
+      border-radius: 5px;
       cursor: pointer;
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      height: 90px;
+      font-size: 1rem;
       transition: 0.3s;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     
-    .nav-button:hover:not(:disabled) {
-      transform: scale(1.05);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    .sidebar button:hover {
+      transform: scale(1.02);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     
-    .nav-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .sidebar button.active {
+      background: linear-gradient(to right, #e52e71, #ff8a00);
+      font-weight: bold;
+    }
+    
+    .sidebar .nav-button {
+      margin-top: 20px;
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      z-index: 999;
+    }
+    
+    .overlay.active {
+      display: block;
     }
     
     .game-center {
       flex: 1;
       display: flex;
       flex-direction: column;
-      padding: 10px;
+      padding: 15px;
       overflow: hidden;
     }
     
     .game-instructions {
       background: white;
       color: #e52e71;
-      padding: 12px;
+      padding: 15px;
       border-radius: 10px;
       text-align: center;
-      font-size: 1rem;
+      font-size: 1.2rem;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     
     .game-frame-container {
@@ -116,22 +172,22 @@
       width: 100%;
       height: 100%;
       border: none;
-      min-height: 400px;
+      min-height: 500px;
     }
     
     .current-game {
       text-align: center;
-      font-size: 0.85rem;
+      font-size: 1rem;
       color: #666;
-      margin-top: 10px;
+      margin-top: 15px;
     }
     
     .app-footer {
       background: linear-gradient(to right, #ff8a00, #e52e71);
       color: white;
       text-align: center;
-      padding: 10px;
-      font-size: 0.8rem;
+      padding: 12px;
+      font-size: 0.9rem;
       flex-shrink: 0;
     }
     
@@ -150,22 +206,22 @@
     }
     
     .welcome-screen h1 {
-      font-size: 2.2rem;
-      margin-bottom: 20px;
+      font-size: 2.5rem;
+      margin-bottom: 25px;
     }
     
     .welcome-screen p {
-      font-size: 1.1rem;
-      max-width: 600px;
-      margin-bottom: 30px;
+      font-size: 1.3rem;
+      max-width: 700px;
+      margin-bottom: 35px;
       line-height: 1.5;
     }
     
     .start-button {
       background: white;
       color: #e52e71;
-      padding: 12px 30px;
-      font-size: 1.1rem;
+      padding: 15px 40px;
+      font-size: 1.3rem;
       font-weight: bold;
       border: none;
       border-radius: 30px;
@@ -185,49 +241,61 @@
         flex-direction: column;
       }
     
-      .nav-panel {
-        flex-direction: row;
+      .sidebar {
         width: 100%;
-        justify-content: space-evenly;
-        padding: 8px;
-        order: 1;
+        left: -100%;
+      }
+      
+      .sidebar.open {
+        left: 0;
       }
     
-      .nav-button {
-        writing-mode: horizontal-tb;
-        height: auto;
-        font-size: 0.75rem;
-        padding: 6px 10px;
-        border-radius: 20px;
+      .sidebar ul {
+        display: flex;
+        flex-direction: column;
       }
     
-      .app-header h1 {
-        font-size: 1.2rem;
+      .sidebar li {
+        margin: 5px 0;
       }
     
-      .game-instructions {
+      .sidebar button {
+        width: 100%;
+        padding: 8px 15px;
         font-size: 0.9rem;
       }
     
+      .app-header h1 {
+        font-size: 1.4rem;
+      }
+    
+      .game-instructions {
+        font-size: 1rem;
+      }
+    
       .welcome-screen h1 {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
       }
     
       .welcome-screen p {
-        font-size: 1rem;
+        font-size: 1.1rem;
       }
     
       .start-button {
-        font-size: 1rem;
-        padding: 10px 20px;
+        font-size: 1.1rem;
+        padding: 12px 30px;
       }
     
       #gameFrame {
-        min-height: 300px;
+        min-height: 350px;
       }
     
       .current-game {
-        font-size: 0.75rem;
+        font-size: 0.85rem;
+      }
+      
+      .menu-toggle {
+        font-size: 1.5rem;
       }
     }
     
@@ -243,15 +311,17 @@
 
   <div id="appContainer" style="display: none;">
     <header class="app-header">
+      <button id="menuToggle" class="menu-toggle">☰</button>
       <h1>Alphabet Matching Game</h1>
     </header>
     
     <div class="main-content">
-
-      <div class="nav-panel left-panel">
-        <button class="nav-button" id="prevBtn" disabled>Previous</button>
-        <button class="nav-button" id="teacherBtn">Teacher</button>
-      </div>
+      <nav class="sidebar" id="sidebar">
+        <h2>Games Menu</h2>
+        <ul id="gameListMenu"></ul>
+        <button class="nav-button" id="teacherBtn">Teacher Panel</button>
+      </nav>
+      <div class="overlay" id="overlay"></div>
 
       <div class="game-center">
         <div class="game-instructions" id="instructions">
@@ -265,10 +335,6 @@
         <div class="current-game">
           Playing: <span id="currentGameTitle">Alphabet Matching Game</span>
         </div>
-      </div>
-
-      <div class="nav-panel right-panel">
-        <button class="nav-button" id="nextBtn">Next</button>
       </div>
     </div>
     
@@ -298,26 +364,51 @@
     document.getElementById('startButton').addEventListener('click', () => {
       document.getElementById('welcomeScreen').style.display = 'none';
       document.getElementById('appContainer').style.display = 'block';
+      populateSidebar();
       loadGame(currentIndex);
     });
 
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      if (currentIndex > 0) {
-        currentIndex--;
-        loadGame(currentIndex);
-      }
-    });
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
 
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      if (currentIndex < inputData.gameList.length - 1) {
-        currentIndex++;
-        loadGame(currentIndex);
-      }
-    });
+    menuToggle.addEventListener('click', toggleSidebar);
+
+    overlay.addEventListener('click', toggleSidebar);
+
+    function toggleSidebar() {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+    }
 
     document.getElementById('teacherBtn').addEventListener('click', () => {
       window.location.href = 'input.html';
     });
+
+    function populateSidebar() {
+      const gameListMenu = document.getElementById('gameListMenu');
+      inputData.gameList.forEach((game, index) => {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.textContent = game.title;
+        button.addEventListener('click', () => {
+          currentIndex = index;
+          loadGame(index);
+          highlightActiveGame();
+          toggleSidebar(); // Close sidebar after selection
+        });
+        li.appendChild(button);
+        gameListMenu.appendChild(li);
+      });
+      highlightActiveGame();
+    }
+
+    function highlightActiveGame() {
+      const buttons = document.querySelectorAll('.sidebar button:not(#teacherBtn)');
+      buttons.forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === currentIndex);
+      });
+    }
 
     function loadGame(index) {
       const game = inputData.gameList[index];
@@ -330,8 +421,7 @@
       const gameUrl = `games/game${index + 1}/index.html`;
       document.getElementById('gameFrame').src = gameUrl;
 
-      document.getElementById('prevBtn').disabled = index === 0;
-      document.getElementById('nextBtn').disabled = index === inputData.gameList.length - 1;
+      highlightActiveGame();
 
       if (scormAPI) {
         scormAPI.set('cmi.core.lesson_status', 'incomplete');
@@ -349,6 +439,8 @@
       if (currentIndex < inputData.gameList.length - 1) {
         currentIndex++;
         loadGame(currentIndex);
+      } else {
+        alert('Congratulations! You have completed all games.');
       }
     }
 

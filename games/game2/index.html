@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0"
     />
     <title>Drawing on PDF</title>
     <style>
@@ -26,8 +26,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 20px;
-        padding: 10px 20px;
+        gap: 1rem;
+        padding: 0.5rem 1rem;
         background: rgba(255, 255, 255, 0.95);
         border-bottom: 2px solid #ccc;
         flex-wrap: wrap;
@@ -65,9 +65,9 @@
         right: 0;
         height: 60px;
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
-        gap: 73rem;
+        padding: 0 2rem;
         z-index: 20;
         background: rgba(255, 255, 255, 0.15);
         backdrop-filter: blur(20px) saturate(180%);
@@ -112,7 +112,7 @@
 
       .color-palette {
         display: flex;
-        gap: 10px;
+        gap: 0.5rem;
       }
 
       .color-btn {
@@ -130,7 +130,7 @@
 
       .actions {
         display: flex;
-        gap: 60px;
+        gap: 1rem;
         align-items: center;
       }
 
@@ -155,7 +155,7 @@
 
       .brush-sizes {
         display: flex;
-        gap: 6px;
+        gap: 0.5rem;
       }
 
       .brush-sizes button.selected {
@@ -177,6 +177,47 @@
         background: #ff1a1a;
       }
       
+      /* Media Queries for Responsiveness */
+      @media (max-width: 768px) {
+        #toolbar {
+          flex-direction: column;
+          gap: 0.5rem;
+          padding: 0.5rem;
+        }
+
+        #pdf-container {
+          top: 120px; /* Adjust for taller toolbar on mobile */
+          bottom: 60px;
+        }
+
+        #pdf-controls {
+          padding: 0 1rem;
+        }
+
+        .color-palette {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+
+        .actions {
+          justify-content: center;
+        }
+
+        .brush-sizes {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+      }
+
+      @media (min-width: 1200px) {
+        #toolbar {
+          padding: 1rem 2rem;
+        }
+
+        #pdf-controls {
+          padding: 0 4rem;
+        }
+      }
       
     </style>
 
