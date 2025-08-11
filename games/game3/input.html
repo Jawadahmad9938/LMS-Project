@@ -1,149 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Darakoi Teacher Panel For Input</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-  <div class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">🎓Darakoi Teacher Panel</h2>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Darakoi Teacher Panel For Input</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background: #f0f0f0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Arial, sans-serif;
+      }
+      .container {
+        max-width: 700px;
+        width: 100%;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+      }
+      h2 {
+        font-size: 28px;
+        font-weight: bold;
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      h3 {
+        font-size: 18px;
+        font-weight: bold;
+        color: #444;
+        margin-bottom: 15px;
+      }
 
-    <div class="space-y-6">
-      <!-- Image Inputs -->
-      <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-700 mb-4">Images</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      .section {
+        background: #f9f9f9;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+      @media (min-width: 600px) {
+        .grid.images {
+          grid-template-columns: 1fr 1fr;
+        }
+        .grid.sounds {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+        .grid.settings {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      label {
+        display: block;
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 8px;
+      }
+      input[type="file"],
+      input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      input[type="file"]::file-selector-button {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 6px;
+        background: #e6f0fa;
+        color: #2563eb;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      input[type="file"]::file-selector-button:hover {
+        background: #dbeafe;
+      }
+      img,
+      audio {
+        margin-top: 10px;
+        width: 100%;
+        max-height: 100px;
+        border-radius: 6px;
+        display: none;
+      }
+      audio {
+        width: 100%;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        background: #2563eb;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+      button:hover {
+        background: #1e40af;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>🎓 Darakoi Teacher Panel</h2>
+
+      <div class="section">
+        <h3>Images for the Game</h3>
+        <div class="grid images">
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Background Image</label>
-            <input type="file" id="backgroundInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-            <img id="backgroundPreview" class="mt-2 w-full h-24 object-cover rounded-md hidden" alt="Background Preview" />
+            <label>Background Image (Game Background)</label>
+            <input type="file" id="backgroundInput" accept="image/*" />
+            <img id="backgroundPreview" alt="Background Preview" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Object Image</label>
-            <input type="file" id="objectInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-            <img id="objectPreview" class="mt-2 w-full h-24 object-cover rounded-md hidden" alt="Object Preview" />
+            <label>Default Object Image</label>
+            <input type="file" id="objectInput" accept="image/*" />
+            <img id="objectPreview" alt="Default Object Preview" />
+          </div>
+          <div>
+            <label>Correct Object Image</label>
+            <input type="file" id="correctObjectInput" accept="image/*" />
+            <img id="correctObjectPreview" alt="Correct Object Preview" />
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <h3>Sounds for the Game</h3>
+        <div class="grid sounds">
+          <div>
+            <label>Rotate Sound</label>
+            <input type="file" id="rotateSoundInput" accept="audio/*" />
+            <audio id="rotateSoundPreview" controls></audio>
+          </div>
+          <div>
+            <label>Detection Sound</label>
+            <input type="file" id="detectSoundInput" accept="audio/*" />
+            <audio id="detectSoundPreview" controls></audio>
+          </div>
+          <div>
+            <label>Win Sound</label>
+            <input type="file" id="winSoundInput" accept="audio/*" />
+            <audio id="winSoundPreview" controls></audio>
           </div>
         </div>
       </div>
 
-      <!-- Sound Inputs -->
-      <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-700 mb-4">Sounds</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="section">
+        <h3>Game Settings</h3>
+        <div class="grid settings">
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Rotate Sound</label>
-            <input type="file" id="rotateSoundInput" accept="audio/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-            <audio id="rotateSoundPreview" controls class="mt-2 w-full hidden" />
+            <label>Number of Objects</label>
+            <input type="number" id="numObjects" value="5" min="1" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Detection Sound</label>
-            <input type="file" id="detectSoundInput" accept="audio/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-            <audio id="detectSoundPreview" controls class="mt-2 w-full hidden" />
+            <label>Object Size</label>
+            <input type="number" id="objectSize" value="60" min="10" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Win Sound</label>
-            <input type="file" id="winSoundInput" accept="audio/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-            <audio id="winSoundPreview" controls class="mt-2 w-full hidden" />
+            <label>Show Time</label>
+            <input type="number" id="showDuration" value="1000" />
           </div>
         </div>
       </div>
 
-      <!-- Settings Inputs -->
-      <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-700 mb-4">Game Settings</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Number of Objects</label>
-            <input type="number" id="numObjects" value="5" min="1" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Object Size (px)</label>
-            <input type="number" id="objectSize" value="60" min="10" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Show Duration (ms)</label>
-            <input type="number" id="showDuration" value="1000" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-2">Interval (ms)</label>
-            <input type="number" id="interval" value="5000" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-        </div>
-      </div>
+      <button onclick="generateJSON()">Publish</button>
     </div>
 
-    <button onclick="generateJSON()" class="mt-6 w-full bg-blue-600 text-white font-semibold py-3 rounded-md hover:bg-blue-700 transition duration-200">Download input.json</button>
-  </div>
+    <script src="input.js"></script>
+    <script>
+      window.uploadedFiles = [];
+      const assetPath = "assets";
 
-  <script>
-    // Preview uploaded images and sounds
-    function setupPreview(inputId, previewId, type) {
-      const input = document.getElementById(inputId);
-      const preview = document.getElementById(previewId);
-      input.addEventListener('change', () => {
-        const file = input.files[0];
-        if (file) {
-          const url = URL.createObjectURL(file);
-          preview.src = url;
-          preview.classList.remove('hidden');
-          if (type === 'audio') {
-            preview.load();
+      function generateUniqueName() {
+        const dateTime = Date.now();
+        const random5Digit = Math.floor(10000 + Math.random() * 90000);
+        return `${dateTime}${random5Digit}`;
+      }
+
+      function setupPreview(inputId, previewId, type, dataName) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        input.addEventListener("change", () => {
+          const file = input.files[0];
+          if (file) {
+            const url = URL.createObjectURL(file);
+
+            const fileNameParts = file.name.split(".");
+            const fileExtension =
+              fileNameParts.length > 1 ? fileNameParts.pop().toLowerCase() : "";
+            const fileName = generateUniqueName() + "." + fileExtension;
+            const check = window.uploadedFiles.find(
+              (p) => p.dataName == dataName
+            );
+            if (check) {
+              window.uploadedFiles = window.uploadedFiles.filter(
+                (p) => p.dataName != dataName
+              );
+            }
+            window.uploadedFiles.push({ dataName, type, file, fileName });
+
+            preview.src = url;
+            preview.style.display = "block";
+            if (type === "inputAudio") {
+              preview.load();
+            }
           }
+        });
+      }
+
+      setupPreview(
+        "backgroundInput",
+        "backgroundPreview",
+        "inputImage",
+        "background"
+      );
+      setupPreview("objectInput", "objectPreview", "inputImage", "objectImage");
+      setupPreview(
+        "correctObjectInput",
+        "correctObjectPreview",
+        "inputImage",
+        "correctObjectImage"
+      );
+      setupPreview(
+        "rotateSoundInput",
+        "rotateSoundPreview",
+        "inputAudio",
+        "rotate"
+      );
+      setupPreview(
+        "detectSoundInput",
+        "detectSoundPreview",
+        "inputAudio",
+        "detection"
+      );
+      setupPreview("winSoundInput", "winSoundPreview", "inputAudio", "win");
+
+      function handleFile(fileType) {
+        const splited = fileType.split(".");
+        const keyValue = splited[splited.length - 1];
+        // console.log(keyValue, window.uploadedFiles);
+        const findFile = window.uploadedFiles?.find(
+          (p) => p?.dataName == keyValue
+        );
+        if (window.uploadedFiles.length > 0 && findFile) {
+          return assetPath + "/" + findFile.fileName;
+        } else {
+          const splited = fileType.split(".");
+          let newData = inputData;
+          const joined = splited.map((key) => {
+            newData = newData[key];
+          });
+          return newData;
         }
-      });
-    }
+      }
 
-    setupPreview('backgroundInput', 'backgroundPreview', 'image');
-    setupPreview('objectInput', 'objectPreview', 'image');
-    setupPreview('rotateSoundInput', 'rotateSoundPreview', 'audio');
-    setupPreview('detectSoundInput', 'detectSoundPreview', 'audio');
-    setupPreview('winSoundInput', 'winSoundPreview', 'audio');
-
-    // Get asset filename and prefix with "assets/"
-    function handleFile(fileInput) {
-      const file = fileInput.files[0];
-      return file ? "assets/" + file.name : "";
-    }
-
-    function generateJSON() {
-      const data = {
-        background: handleFile(document.getElementById('backgroundInput')),
-        objectImage: handleFile(document.getElementById('objectInput')),
-        sounds: {
-          rotate: handleFile(document.getElementById('rotateSoundInput')),
-          detection: handleFile(document.getElementById('detectSoundInput')),
-          win: handleFile(document.getElementById('winSoundInput'))
-        },
-        settings: {
-          numObjects: parseInt(document.getElementById('numObjects').value) || 5,
-          objectSize: parseInt(document.getElementById('objectSize').value) || 60,
-          showDuration: parseInt(document.getElementById('showDuration').value) || 1000,
-          interval: parseInt(document.getElementById('interval').value) || 5000
+      function handleValue(valueName) {
+        const value = parseInt(document.getElementById(valueName).value);
+        if (value) return value;
+        else {
+          return "";
         }
-      };
+      }
 
-      const jsonStr = JSON.stringify(data, null, 2);
-      const blob = new Blob([jsonStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
+      function generateJSON() {
+        const data = {
+          background: handleFile("background"),
+          objectImage: handleFile("objectImage"),
+          correctObjectImage: handleFile("correctObjectImage"),
+          sounds: {
+            rotate: handleFile("sounds.rotate"),
+            detection: handleFile("sounds.detection"),
+            win: handleFile("sounds.win"),
+          },
+          settings: {
+            numObjects: handleValue("numObjects"),
+            objectSize: handleValue("objectSize"),
+            showDuration: handleValue("showDuration"),
+          },
+        };
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "input.json";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
-
-    // Access game-specific data
-    const gameData = window.parent.currentGameData || { letters: ['A', 'B', 'C'] };
-    document.getElementById('gameContent').textContent = `Match these letters: ${gameData.letters?.join(', ') || 'No data'}`;
-
-    function completeGame() {
-      window.parent.postMessage({ type: 'gameComplete', score: 90 }, '*');
-    }
-  </script>
-</body>
+        try {
+          window.parent.postMessage(
+            {
+              type: "saveValues",
+              inputData: data,
+            },
+            window.origin
+          );
+        } catch (error) {
+          console.error("Error sending postMessage:", error);
+          alert("Failed to send data to parent window.");
+        }
+      }
+    </script>
+  </body>
 </html>

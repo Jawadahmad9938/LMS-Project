@@ -17,7 +17,7 @@
   </style>
 </head>
 <body>
-
+  
 <canvas id="gameCanvas"></canvas>
 <script src="input.js"></script>
 
@@ -41,24 +41,31 @@ const bladeLength = Math.max(width, height) * 0.95;
 const radarAngleSpan = Math.PI / 8;
 const bladeHalfWidth = Math.tan(radarAngleSpan / 2) * bladeLength;
 
-const rotateSound = new Audio(InputData.sounds.rotate);
-const winSound = new Audio(InputData.sounds.win);
+const rotateSound = new Audio(inputData.sounds.rotate);
+const winSound = new Audio(inputData.sounds.win);
 
-const numObjects = InputData.settings.numObjects;
-const objectSize = InputData.settings.objectSize;
+const numObjects = inputData.settings.numObjects;
+const objectSize = inputData.settings.objectSize;
 let objects = [];
 let correctObjectIndex = Math.floor(Math.random() * numObjects);
 let showObjects = true;
 let hasDetected = false; // Detection flag
 
-const uploadedImage = new Image();
-uploadedImage.src = InputData.objectImage;
+const defaultObjectImage = new Image();
+defaultObjectImage.src = inputData.objectImage;
+
+const correctObjectImage = new Image();
+correctObjectImage.src = inputData.correctObjectImage;
 
 const backgroundImage = new Image();
-backgroundImage.src = InputData.background;
+backgroundImage.src = inputData.background;
 
 backgroundImage.onload = () => {
   createObjects();
+  setTimeout(() => {
+    showObjects = false;
+    draw();
+  }, inputData.settings.showDuration);
   draw();
 };
 
@@ -74,21 +81,26 @@ function createObjects() {
 }
 
 function drawObjects() {
-  if (!showObjects || !uploadedImage.complete) return;
+  if (!showObjects) return;
 
   objects.forEach(obj => {
     ctx.save();
 
     if (obj.isCorrect) {
-      ctx.shadowColor = 'black';
-      ctx.shadowBlur = 20;
-      ctx.shadowOffsetX = 5;
-      ctx.shadowOffsetY = 5;
+      if (correctObjectImage.complete) {
+        ctx.shadowColor = 'black';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+        ctx.drawImage(correctObjectImage, obj.x, obj.y, objectSize, objectSize);
+      }
     } else {
-      ctx.shadowColor = 'transparent';
+      if (defaultObjectImage.complete) {
+        ctx.shadowColor = 'transparent';
+        ctx.drawImage(defaultObjectImage, obj.x, obj.y, objectSize, objectSize);
+      }
     }
 
-    ctx.drawImage(uploadedImage, obj.x, obj.y, objectSize, objectSize);
     ctx.restore();
   });
 }
@@ -126,14 +138,16 @@ function checkDetection() {
       const cy = obj.y + objectSize / 2;
       const dist = distanceFromPointToLine(cx, cy, centerX, centerY, endX, endY);
       if (dist < objectSize / 2) {
-        const detectionSound = new Audio(InputData.sounds.detection);
+        const detectionSound = new Audio(inputData.sounds.detection);
         detectionSound.currentTime = 0;
         detectionSound.play();
 
         winSound.currentTime = 0;
         winSound.play();
+        // finishSCORM()
 
-        hasDetected = true; //Only detect once per round
+        hasDetected = true; 
+        finishSCORM(); 
       }
     }
   });
@@ -190,7 +204,6 @@ canvas.addEventListener("click", (e) => {
   draw();
 });
 
-
 document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowRight") rotateBlade("right");
   else if (e.key === "ArrowLeft") rotateBlade("left");
@@ -204,13 +217,124 @@ window.addEventListener("resize", () => {
   draw();
 });
 
-setInterval(() => {
-  showObjects = true;
-  createObjects();
-  setTimeout(() => showObjects = false, InputData.settings.showDuration);
-}, InputData.settings.interval);
-
 setInterval(draw, 40);
+
+//pre-defined functions
+let API
+function findAPI(win) {
+  let attempts = 0;
+  const maxAttempts = 50;
+  while (win && attempts < maxAttempts) {
+      if (win.API) {
+          console.log("Found SCORM API (1.2) in window");
+          return win.API;
+      }
+      if (win.API_1484_11) {
+          console.log("Found SCORM API (2004) in window");
+          return win.API_1484_11;
+      }
+      try {
+          console.log("Checking parent window at attempt", attempts);
+          win = win.parent;
+      } catch (e) {
+          console.error("Error accessing parent window:", e);
+          win = null;
+      }
+      attempts++;
+  }
+  if (window.opener && window.opener.API) {
+      console.log("Found SCORM API (1.2) in opener");
+      return window.opener.API;
+  }
+  if (window.opener && window.opener.API_1484_11) {
+      console.log("Found SCORM API (2004) in opener");
+      return window.opener.API_1484_11;
+  }
+  if (window.top && window.top.API) {
+      console.log("Found SCORM API (1.2) in top");
+      return window.top.API;
+  }
+  if (window.top && window.top.API_1484_11) {
+      console.log("Found SCORM API (2004) in top");
+      return window.top.API_1484_11;
+  }
+  for (let i = 0; i < window.frames.length; i++) {
+      try {
+          if (window.frames[i].API) {
+              console.log("Found SCORM API (1.2) in frame", i);
+              return window.frames[i].API;
+          }
+          if (window.frames[i].API_1484_11) {
+              console.log("Found SCORM API (2004) in frame", i);
+              return window.frames[i].API_1484_11;
+          }
+      } catch (e) {
+          console.error("Error accessing frame", i, ":", e);
+      }
+  }
+  console.error("SCORM API not found after checking all contexts");
+  return null;
+}
+
+function initializeSCORM() {
+  API = findAPI(window)
+  if (!API) {
+      console.error("SCORM API not found");
+      return false;
+  }
+  const result = API.LMSInitialize("");
+  if (result !== "true") {
+      const errorCode = API.LMSGetLastError();
+      const errorString = API.LMSGetErrorString(errorCode);
+      console.error(`SCORM Initialization failed: Error ${errorCode} - ${errorString}`);
+      return false;
+  }
+  console.log("SCORM Initialized");
+  setSCORMValue("cmi.core.lesson_status", "incomplete");
+  return true;
+}
+function setSCORMValue(key, value) {
+  if (API) {
+      const result = API.LMSSetValue(key, value);
+      if (result !== "true") {
+          const errorCode = API.LMSGetLastError();
+          const errorString = API.LMSGetErrorString(errorCode);
+          console.error(`Failed to set ${key}: Error ${errorCode} - ${errorString}`);
+          return false;
+      }
+      API.LMSCommit("");
+      return true;
+  }
+  console.error("Cannot set SCORM value: API not available");
+  return false;
+}
+let startTime = Date.now();
+function calculateSessionTime() {
+  const seconds = Math.floor((Date.now() - startTime) / 1000);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+async function finishSCORM() {
+  if (API) {
+      const sessionTime = calculateSessionTime();
+      setSCORMValue('cmi.core.lesson_status', 'passed')
+      const result = await API.LMSFinish("");
+      if (result !== "true") {
+          const errorCode = API.LMSGetLastError();
+          const errorString = API.LMSGetErrorString(errorCode);
+          console.error(`SCORM Finish failed: Error ${errorCode} - ${errorString}`);
+          return `SCORM Finish failed: Error ${errorCode} - ${errorString}`;
+      } else {
+          console.log("SCORM Finished");
+      }
+  } else {
+      return "SCORM API not available. Time spent: " + calculateSessionTime();
+  }
+}
+initializeSCORM()
+
 </script>
 </body>
 </html>
